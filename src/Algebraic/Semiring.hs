@@ -25,12 +25,12 @@
 
 module Algebraic.Semiring (
     
-    -- * Additive Monoids with an additional type class for checking constants
+    -- * Additive monoids with an additional type class for checking constants
     
     MonoidA ( .. ),
     FindZero ( .. ),
     
-    -- * Multiplicative Monoids with an additional type class for checking constants
+    -- * Multiplicative monoids with an additional type class for checking constants
     
     MonoidM ( .. ),
     FindOne ( .. ),
@@ -151,8 +151,8 @@ class MonoidM m where
 -- | A type class that provides a single predicate that can be used to check,
 -- whether an element is \"zero\" or not.
 -- The standalone type class is required to satisfy the rule
+--
 -- [/tertium non datur/]
---   
 --   @not . 'isZero' == 'isNotZero'@.
 -- 
 -- If a type @a@ has a 'FindZero' and a 'MonoidA' instance,
@@ -174,9 +174,9 @@ class FindZero a where
 -- | A type class that provides a single predicate that can be used to check,
 -- whether an element is \"one\" or not.
 -- The standalone type class is required to satisfy the rule
+-- 
 -- [/tertium non datur/]
---   
---   @not . 'isOne' == 'isNotOne'@.
+--    @not . 'isOne' == 'isNotOne'@.
 --   
 -- If a type @m@ has a 'FindOne' and a 'MonoidM' instance,
 -- the following equality should hold for all @x :: m@
@@ -457,10 +457,10 @@ instance MonoidA () where
 
 instance MonoidA Bool where
 
-    (.+.)  = (||)
-    zero   = False
-    msum   = or
-    mtimes = const id
+    (.+.)      = (||)
+    zero       = False
+    msum       = or
+    mtimes n b = n > 0 && b
 
 -- | The additive number operation.
 
@@ -535,6 +535,13 @@ instance (Eq n, Num n) => FindZero (Number n) where
     isZero    = (0 ==) . number
     isNotZero = (0 /=) . number
 
+-- | The greatest element is neutral with respect to the minimum operation.
+
+instance FindZero (Tropical t) where
+
+    isZero Max = True
+    isZero _   = False
+
 -- | The empty word is the 'zero' element with respect to the induced language.
 
 instance FindZero (Regular r) where
@@ -563,8 +570,10 @@ instance MonoidM () where
 
 instance MonoidM Bool where
 
-    (.*.) = (&&)
-    one   = True
+    (.*.)      = (&&)
+    one        = True
+    mproduct   = and
+    mpower b n = n <= 0 || b
 
 -- | The multiplicative number operation.
 
@@ -642,3 +651,102 @@ instance MonoidM m => MonoidM (x -> m) where
 
     (.*.) = liftA2 (.*.)
     one   = pure one
+
+-- | Every element is a multiplicative unit.
+
+instance FindOne () where
+
+    isOne    = const True
+    isNotOne = const False
+
+-- | The value 'True' is a multiplicative unit for @('&&')@.
+
+instance FindOne Bool where
+
+    isOne    = id
+    isNotOne = not
+
+-- | The value 'Number 1' is a multiplicative unit.
+
+instance (Num n, Eq n) => FindOne (Number n) where
+
+    isOne (Number 1) = True
+    isOne _          = False
+
+-- | The multiplicative unit with respect to the tropical multiplication is 'Min'-
+
+instance FindOne (Tropical t) where
+
+    isOne Min = True
+    isOne _   = False
+
+-- | The empty word is a neutral element for the composition of regular expressions with
+-- respect to the induced language.
+
+instance FindOne (Regular r) where
+
+    isOne Empty = True
+    isOne _     = False
+
+-- | The multiplicative unit of list concatenation is the empty list.
+
+instance FindOne [a] where
+
+    isOne = null
+
+-- | The multiplicative unit of the doubly listed monoid operation is the doubly lifted unit.
+
+instance FindOne a => FindOne (First a) where
+
+    isOne (First (Just x)) = isOne x
+    isOne _                = False
+
+-- | The multiplicative unit of pairs is the pair of multiplicative units.
+
+instance (FindOne a, FindOne b) => FindOne (a, b) where
+
+    isOne = uncurry (&&) . (isOne *** isOne)
+
+-- | The trivial semiring.
+
+instance Semiring ()
+
+-- | The Boolean semiring.
+
+instance Semiring Bool
+
+-- | The usual, numerical semiring.
+
+instance Num n => Semiring (Number n)
+
+-- | The tropical semiring.
+
+instance (Ord t, MonoidA t) => Semiring (Tropical t)
+
+-- | The unreduced free semiring.
+
+instance Semiring (Regular r)
+
+-- | The pointwise semiring of 'ZipList's.
+
+instance Semiring s => Semiring (ZipList s)
+
+-- | The semiring in which the addition is the choice of the first non-'Nothing' element.
+
+instance MonoidM m => Semiring (First m)
+
+-- | The product semiring.
+
+instance (Semiring s, Semiring s') => Semiring (s, s')
+
+-- | The function semiring with pointwise operations.
+
+instance Semiring s => Semiring (x -> s)
+
+instance SemiringC ()
+instance SemiringC Bool
+instance (Num n, Eq n) => SemiringC (Number n)
+instance (Ord t, MonoidA t) => SemiringC (Tropical t)
+instance SemiringC (Regular r)
+instance (MonoidM m, FindOne m) => SemiringC (First m)
+instance (SemiringC s, SemiringC s') => SemiringC (s, s')
