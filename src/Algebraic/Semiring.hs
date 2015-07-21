@@ -21,7 +21,7 @@
 -- 
 -- and with the deprecated package <http://hackage.haskell.org/package/monoids monoids>.
 
-{-# LANGUAGE DeriveFunctor #-}
+{-# Language GeneralizedNewtypeDeriving, DeriveFunctor #-}
 
 module Algebraic.Semiring (
     
@@ -35,44 +35,70 @@ module Algebraic.Semiring (
     MonoidM ( .. ),
     FindOne ( .. ),
     
-    -- * Semirings with an additional type class for checking constants and idempotend semirings.
+    -- * Semirings with an additional type class for checking constants and idempotent semirings
 
     Semiring,
     SemiringC,
 
-    -- * Kleene algebras
+    -- * Kleene algebras with an additional type class for checking constants
 
-    KleeneAlgebra ( .. )
+    KleeneAlgebra ( .. ),
+    KleeneAlgebraC,
+
+    -- * Data types with algebraic instances
+    
+    Number ( .. ),
+    Tropical ( .. ),
+    tropicalToNumber,
+    numberToTropical,
+    safeNumberToTropical,
+    Regular,
+    isComposite,
+    noWord,
+    emptyWord,
+    (.++.),
+    (.||.),
+    repetition
     
     ) where
 
-import Control.Arrow ( first )
-import Data.List     ( genericReplicate )
+import Control.Applicative ( ZipList, Applicative ( .. ), liftA2 )
+import Control.Arrow       ( first, (***) )
+import Data.List           ( genericReplicate )
+import Data.Maybe          ( isNothing )
+import Data.Monoid         ( First ( .. ), mappend )
+import Data.Ord            ( comparing )
 
--- | A type class for additive monoids.
---   The prerequisite of additivity is merely a notational choice 
---   and does not come with any additional requirements.
---   Instances of this type class are required to satisfy the rules
---   for all @a, b, c :: m@
---   
---   [/associativity/]
---      @a '.+.' (b '.+.' c) = (a '.+.' b) '.+.' c@
---   
---   [/neutrality/]
---      @a '.+.' 'zero' = a = 'zero' '.+.' a@
+import Auxiliary.General   ( (<.>) )
+
+-- | 
+-- A type class for additive monoids.
+-- The prerequisite of additivity is merely a notational choice 
+-- and does not come with any additional requirements.
+-- Instances of this type class are required to satisfy the rules
+-- for all @a, b, c :: m@
+--  
+-- [/associativity/]
+--    @a '.+.' (b '.+.' c) = (a '.+.' b) '.+.' c@
+-- 
+-- [/neutrality/]
+--    @a '.+.' 'zero' = a = 'zero' '.+.' a@
 
 class MonoidA a where
-    {-# MINIMAL (.+.), zero #-}
+    {-# Minimal (.+.), zero | msum #-}
 
     -- | A binary associative operation.
 
     infixr 5 .+.
     (.+.) :: a -> a -> a
+    a .+. b = msum [a, b]
 
-    -- | A neutral element with respect to '(.+.)'.
-    --   This element is automatically unique.
+    -- | 
+    -- A neutral element with respect to @('.+.')@.
+    -- This element is automatically unique.
 
     zero  :: a
+    zero = msum []
     
     -- | The sum of a list of elements.
 
@@ -84,30 +110,33 @@ class MonoidA a where
     mtimes :: Integer -> a -> a
     mtimes n x = msum (genericReplicate n x)
 
--- | A type class for multiplicative monoids.
---   This structure is isomorphic to the 'MonoidA' structure,
---   but has a different fixity for the monoid operation.
---   Instances of this type class are required to satisfy the rules
---   for all @a, b, c :: m@
+-- | 
+-- A type class for multiplicative monoids.
+-- This structure is isomorphic to the 'MonoidA' structure,
+-- but has a different fixity for the monoid operation.
+-- Instances of this type class are required to satisfy the rules
+-- for all @a, b, c :: m@
 --   
---   [/associativity/]
---      @a '.*.' (b '.*.' c) = (a '.*.' b) '.*.' c@
---   
---   [/neutrality/]
---      @a '.*.' 'one' = a = 'one' '.*.' a@
+-- [/associativity/]
+--    @a '.*.' (b '.*.' c) = (a '.*.' b) '.*.' c@
+--  
+-- [/neutrality/]
+--    @a '.*.' 'one' = a = 'one' '.*.' a@
 
 class MonoidM m where
-    {-# MINIMAL (.*.), one #-}
+    {-# Minimal one, (.*.) | mproduct #-}
 
     -- | A binary associative operation.
 
     infixr 6 .*.
     (.*.) :: m -> m -> m
+    a .*. b = mproduct [a, b]
 
-    -- | A neutral element with respect to '(.*.)'.
+    -- | A neutral element with respect to @('.*.')@.
     --   This element is automatically unique.
 
     one   :: m
+    one = mproduct []
 
     -- | The sum of a list of elements.
 
@@ -120,130 +149,141 @@ class MonoidM m where
     mpower x n = mproduct (genericReplicate n x)
 
 -- | A type class that provides a single predicate that can be used to check,
---   whether an element is \"zero\" or not.
---   The standalone type class is not required to satisfy any rules.
---   However, if a type @a@ has a 'FindZero' and a 'MonoidA' instance,
---   the following equality should hold for all @x :: a@
+-- whether an element is \"zero\" or not.
+-- The standalone type class is required to satisfy the rule
+-- [/tertium non datur/]
 --   
---   @isZero x == True@ @<===>@ @x@ is mathematically equal to 'zero'
+--   @not . 'isZero' == 'isNotZero'@.
+-- 
+-- If a type @a@ has a 'FindZero' and a 'MonoidA' instance,
+-- the following equality should hold for all @x :: a@
+--  
+-- @isZero x == True@ @<===>@ @x@ is mathematically equal to 'zero'
 
 class FindZero a where
-    {-# MINIMAL isZero #-}
-    -- | A predicate that checks, whether an element is an abstract zero or not.
+    {-# Minimal isZero | isNotZero #-}
+    -- | A predicate that checks, whether an element is an abstract zero.
 
     isZero :: a -> Bool
+    isZero = not . isNotZero
+
+    -- | A predicate that checks, whether an element is an abstract zero.
+    isNotZero :: a -> Bool
+    isNotZero = not . isZero
 
 -- | A type class that provides a single predicate that can be used to check,
---   whether an element is \"one\" or not.
---   The standalone type class is not required to satisfy any rules.
---   However, if a type @m@ has a 'FindOne' and a 'MonoidM' instance,
---   the following equality should hold for all @x :: m@
+-- whether an element is \"one\" or not.
+-- The standalone type class is required to satisfy the rule
+-- [/tertium non datur/]
 --   
---   @isOne x == True@ @\<===\>@ @x@ is mathematically equal to 'one'
+--   @not . 'isOne' == 'isNotOne'@.
+--   
+-- If a type @m@ has a 'FindOne' and a 'MonoidM' instance,
+-- the following equality should hold for all @x :: m@
+--   
+-- @isOne x == True@ @\<===\>@ @x@ is mathematically equal to 'one'
 
 class FindOne m where
-    {-# MINIMAL isOne #-}
-    -- | A predicate that checks, whether an element is an abstract one or not.
+    {-# Minimal isOne | isNotOne #-}
+
+    -- | A predicate that checks, whether an element is an abstract one.
 
     isOne :: m -> Bool
+    isOne = not . isNotOne
+
+    -- | A predicate that checks, whether an element is not an abstract one.
+
+    isNotOne :: m -> Bool
+    isNotOne = not . isOne
 
 -- | The semiring type class.
---   Semirings do not provide any additional functions other than those already provided
---   by the underlying instances of 'MonoidA' and 'MonoidM'.
---   Thus every semiring instance is trivial and can be obtained by simply writing
+-- Semirings do not provide any additional functions other than those already provided
+-- by the underlying instances of 'MonoidA' and 'MonoidM'.
+-- Thus every semiring instance is trivial and can be obtained by simply writing
 --   
---   > instance Semiring Foo
+-- > instance Semiring Foo
 --   
---   However, if @s@ is a type with a 'MonoidA' and a 'MonoidM' instance,
---   the following additional rules are required for a 'Semiring' instance
---   for all @a, b, c :: s@
+-- However, if @s@ is a type with a 'MonoidA' and a 'MonoidM' instance,
+-- the following additional rules are required for a 'Semiring' instance
+-- for all @a, b, c :: s@
 --   
---   [/left distributivity/]
---      @(a '.+.' b) '.*.' c = a '.*.' c '.+. b '.*.' c@ (multiplication has a higher fixity)
+-- [/left distributivity/]
+--    @(a '.+.' b) '.*.' c = a '.*.' c '.+. b '.*.' c@ (multiplication has a higher fixity)
 --   
---   [/right distributivity/]
---      @a '.*.' (b '.+.' c) = a '.*.' b '.+.' a '.*.' c@ (multiplication has a higher fixity)
 --   
---   [/annulator/]
---      @a '.*.' 'zero' = 'zero' = 'zero' '.*.' a@
+-- [/right distributivity/]
+--    @a '.*.' (b '.+.' c) = a '.*.' b '.+.' a '.*.' c@ (multiplication has a higher fixity)
+-- 
+--   
+-- [/annulator/]
+--    @a '.*.' 'zero' = 'zero' = 'zero' '.*.' a@
 
 class (MonoidA s, MonoidM s) => Semiring s
 
 -- | A type class for idempotent semirings.
---   In idempotent semiring the following rule holds for all @a@
+-- In idempotent semiring the following rule holds for all @a@
 --   
---   [/addition is idempotent/]
---      @a '.+.' a = a@
+-- [/addition is idempotent/]
+--    @a '.+.' a = a@
 --   
---   This rule cannot be checked automatically,
---   but needs to be provided by the user.
---   Again, the actual instances of this type class are obtained trivially as
+-- This rule cannot be checked automatically,
+-- but needs to be provided by the user.
+-- Again, the actual instances of this type class are obtained trivially as
 --   
---   > instance IdempotentSemiring Foo where
+-- > instance IdempotentSemiring Foo where
 --   
 
 class Semiring s => IdempotentSemiring s
 
 -- | In idempotent semirings that also have an 'Eq' instance, 
---   one can define the semiring order in a similar fashion as in a lattice.
---   The idempotence is required for the order to be reflexive.
+-- one can define the semiring order in a similar fashion as in a lattice.
+-- The idempotence is required for the order to be reflexive.
 
 (.<=.) :: (IdempotentSemiring s, Eq s) => s -> s -> Bool
 s .<=. t = s .+. t == t
 
 -- | A type class for semirings in which the constants can be distinguished from other elements.
---   This is useful for structures in which the general equality test might be complex
---   (or undecidable),
---   but the test for specific constants is rather simple.
---   Just as with the 'Semiring' type class, instances of 'SemiringC' are rather simple,
---   because they can be obtained writing
+-- This is useful for structures in which the general equality test might be complex
+-- (or undecidable),
+-- but the test for specific constants is rather simple.
+-- Just as with the 'Semiring' type class, instances of 'SemiringC' are rather simple,
+-- because they can be obtained writing
 --   
---   > instance SemiringC Foo
+-- > instance SemiringC Foo
 --   
---   Note that semirings in particular have instances of 'MonoidA' and 'MonoidM' so that
---   the corresponding rules in combination with 'FindZero' and 'FindOne' are required.
+-- Note that semirings in particular have instances of 'MonoidA' and 'MonoidM' so that
+-- the corresponding rules in combination with 'FindZero' and 'FindOne' are required.
 
 class (Semiring s, FindZero s, FindOne s) => SemiringC s
 
 -- | The Kleene algebra type class.
---   Kleene algebras are idempotent semirings with an additional 'star' operation that 
---   satisfies certain properties listed below.
---   We use the definition (and equivalent characterisation) presented in
+-- Kleene algebras are idempotent semirings with an additional 'star' operation that 
+-- satisfies certain properties listed below.
+-- We use the definition (and equivalent characterisation) presented in
 --   
---   * Dexter Kozen, "A Completeness Theorem for Kleene Algebras and the Algebra of regular events",
---     Information and Computation 110:2 (1994) pp. 366-390,
---     <www.cs.cornell.edu/~kozen/papers/ka.pdf available here>.
+-- * Dexter Kozen, "A Completeness Theorem for Kleene Algebras and the Algebra of regular events",
+--   Information and Computation 110:2 (1994) pp. 366-390,
+--   <www.cs.cornell.edu/~kozen/papers/ka.pdf available here>.
 --   
---   If @k@ is a type, the following rules must hold for all @a, b, x :: k@
---   for @k@ to become a Kleene algebra, where @\<=@ refers to the mathematical
---   order in an idempotent semiring:
+-- If @k@ is a type, the following rules must hold for all @a, b, x :: k@
+-- for @k@ to become a Kleene algebra, where @\<=@ refers to the mathematical
+-- order in an idempotent semiring:
 --   
---   [/pre-fixpoint/]
+-- [/pre-fixpoint/]
+--  
+--  * @'one' '.+.' a '.*.' 'star' a <= 'star' a@
+--  * @'one' '.+.' 'star' a '.*.' a <= 'star' a@
 --   
---      @'one' '.+.' a '.*.' 'star' a <= 'star' a@
---      and
---      @'one' '.+.' 'star' a '.*.' a <= 'star' a@
+-- [/star inclusion/]
 --   
---   [/star inclusion/]
---      
---      @b '.+.' a '.*.' x \<= x ===\>  'star' a '.*.' b \<= x@
---      and
---      @b '.+.' x '.*.' a \<= x ===\>  b '.*.' 'star' a \<= x@.
---   
---   The star inclusion property is equivalent to the following one,
---   which can be substituted instead.
---   
---   [/star inclusion'/]
---   
---      @a '.*.' b \<= b ===\> 'star' a '.*.' b \<= b@
---      and
---      @b '.*.' a \<= b ===\> b '.*.' 'star' a \<= b@
+--  * @a '.*.' b \<= b ===\> 'star' a '.*.' b \<= b@
+--  * @b '.*.' a \<= b ===\> b '.*.' 'star' a \<= b@
 
 class IdempotentSemiring k => KleeneAlgebra k where
     {-# Minimal star | plus #-}
 
     -- | The star closure, which is a generalisation of the reflexive-transitive closure of
-    --   relations.
+    -- relations.
 
     star :: k -> k
     star x = one .+. plus x
@@ -253,11 +293,17 @@ class IdempotentSemiring k => KleeneAlgebra k where
     plus :: k -> k
     plus x = x .*. star x
 
+-- | A type class for Kleene algebras in which the constants can be distinguished from other
+-- elements.
+-- Its behaviour is very similar to the one discussed for 'SemiringC'.
+
+class (KleeneAlgebra k, FindZero k, FindOne k) => KleeneAlgebraC k
+
 -- | A data type for wrapped numbers similar to the one presented in
---   <http://hackage.haskell.org/package/weighted-regexp weighted-regexp>.
+-- <http://hackage.haskell.org/package/weighted-regexp weighted-regexp>.
 
 newtype Number n = Number { number :: n }
-    deriving ( Eq, Ord, Functor )
+    deriving ( Eq, Ord, Num, Functor )
 
 -- | Numbers are shown by removing their wrapper.
 
@@ -265,22 +311,334 @@ instance Show n => Show (Number n) where
 
     show = show . number
 
--- | Note: This instance declaration is consistent with the previously defined
---   instance for Show. 
---   Since 'Number' is just a wrapper it is considered non-existent 
---   when shown or written as a string,
---   thus simple numbers (belonging to the class 'Num') are read as wrapped numbers.
+-- | This instance declaration is consistent with the previously defined
+-- instance for Show. 
+-- Since 'Number' is just a wrapper it is considered non-existent 
+-- when shown or written as a string,
+-- thus simple numbers (belonging to the class 'Num') are read as wrapped numbers.
 
 instance Read n => Read (Number n) where
 
     readsPrec = map (first Number) <.> readsPrec
+
+-- | 
+-- A maybe-like wrapper for numbers introducing a smallest and a largest element.
+-- This data type is used in Dijkstra's algorithm
+-- (via correct instantiation of Kleene's algorithm).
+
+data Tropical w = Tropical { weight :: w } | Min | Max
+    deriving ( Eq, Functor )
+
+-- | A trivial instance of show to denote 'Min' and 'Max' separately.
+
+instance Show w => Show (Tropical w) where
+
+    show (Tropical w) = show w
+    show Min        = "Zero."
+    show Max        = "Infinity."
+
+-- | 'Max' is larger than any other element, 'Min' is smaller than any other element, 
+-- but the restriction of the order to the objects without these two
+-- yields the original order.
+
+instance Ord w => Ord (Tropical w) where
+
+    compare Min Min = EQ
+    compare Min _   = LT
+    compare _   Min = GT
+    compare Max Max = EQ
+    compare Max _   = GT
+    compare _   Max = LT
+    compare w1  w2  = comparing weight w1 w2
+
+-- | Transforms a weight to a number. This is a partial function, because there is
+--   no sensible representation of @Min@ or @Max@ in @Number@s.
+
+tropicalToNumber :: Tropical w -> Number w
+tropicalToNumber (Tropical x) = Number x
+tropicalToNumber _            = error "Not a number."
+
+-- | Transforms a number into a weight by simply replacing the wrapper.
+
+numberToTropical :: Number n -> Tropical n
+numberToTropical = Tropical . number
+
+-- | Safely transforms a number into a weight by checking whether the number is greater
+-- than zero first.
+
+safeNumberToTropical :: (Ord n, Num n) => Number n -> Tropical n
+safeNumberToTropical n | n < 0     = Min
+                       | otherwise = numberToTropical n
+
+-- | A data type for regular expressions.
+
+data Regular a = NoWord 
+               | Empty 
+               | Single a 
+               | Binary BinOp (Regular a) (Regular a)
+               | Star (Regular a)
+
+-- | A predicate that checks whether the regular expression is one of the base cases or not
+
+isComposite :: Regular a -> Bool
+isComposite (Binary {}) = True
+isComposite (Star _)    = True
+isComposite _           = False
+
+-- | The empty regular expression.
+
+noWord :: Regular a
+noWord = NoWord
+
+-- | The empty word.
+
+emptyWord :: Regular a
+emptyWord = Empty
+
+-- | A single letter regular expression.
+
+single :: a -> Regular a
+single = Single
+
+-- | Composition of two regular expressions.
+
+infixr 6 .++.
+(.++.) :: Regular a -> Regular a -> Regular a
+(.++.) = Binary Composition
+
+-- | Alternative of two regular expressions.
+
+infixr 5 .||.
+(.||.) :: Regular a -> Regular a -> Regular a
+(.||.) = Binary Alternative
+
+-- | Repetition of a regular expression
+
+repetition :: Regular a -> Regular a
+repetition = Star
+
+-- | Data type for the binary operations on regular expressions.
+
+data BinOp = Alternative | Composition
+
+-- | A show instance that uses pretty unicode symbols for the binary regular expression operations.
+
+instance Show BinOp where
+
+    show Alternative = "\x2295"
+    show Composition = "\x229B"
+
+-- | Returns the numerical precedences of the abstract binary operations on regular expressions.
+
+precedence :: BinOp -> Int
+precedence Alternative = 5
+precedence Composition = 6
+
+-- | A pretty-printed instance that uses certain unicode symbols to represent the mathematical
+--   background, for instance the empty regular expression is shown as a unicode epsilon.
+
+instance Show a => Show (Regular a) where
+
+    showsPrec _ NoWord         = showString "\x2205"
+    showsPrec _ Empty          = showString "\x03B5"
+    showsPrec _ (Single a)     = shows a
+    showsPrec p (Binary b r s) = showParen (p > p') (showsPrec p' r . shows b . showsPrec p' s)
+                                   where p' = precedence b
+    showsPrec p (Star r)       = showParen (isComposite r) (showsPrec p r) . showString "*"
+
+-- Instance declarations
 
 instance MonoidA () where
 
     (.+.) _ _ = ()
     zero      = ()
 
+-- | The disjunction of Boolean values.
+
 instance MonoidA Bool where
 
-    (.+.) = (||)
-    zero  = False
+    (.+.)  = (||)
+    zero   = False
+    msum   = or
+    mtimes = const id
+
+-- | The additive number operation.
+
+instance Num n => MonoidA (Number n) where
+
+    (.+.) = (+)
+    zero  = 0
+
+-- | The Min-Plus instance, where addition is the minimum of two values.
+
+instance Ord t => MonoidA (Tropical t) where
+
+    (.+.) = min
+    zero  = Max
+
+-- | This is only a monoid up to the induced language of a regular expression!
+
+instance MonoidA (Regular r) where
+
+    (.+.) = (.||.)
+    zero  = noWord
+
+-- | 'ZipList's form an additive monoid with the pointwise addition.
+-- The same strategy works every other 'Applicative' instance.
+
+instance MonoidA a => MonoidA (ZipList a) where
+
+    (.+.) = liftA2 (.+.)
+    zero  = pure zero
+
+-- | 'First' is a monoid by design and we consider it to be additive.
+
+instance MonoidA (First a) where
+
+    (.+.) = mappend
+    zero  = First Nothing
+
+-- | Direct products of additive monoids are additive monoids as well by
+--   using the respective addition in the respective component.
+
+instance (MonoidA a, MonoidA a') => MonoidA (a, a') where
+
+    (al, ar) .+. (bl, br) = (al .+. bl, ar .+. br)
+    zero                  = (zero, zero)
+
+-- | Functions into an additive semigroup form a semigroup as well by defining
+--   addition pointwise, i.e. f .+. g = \x -> f x .+. g x
+
+instance MonoidA a => MonoidA (x -> a) where
+
+    (.+.) = liftA2 (.+.)
+    zero  = pure zero
+
+-- | Every element is 'zero'.
+
+instance FindZero () where
+
+    isZero    = const True
+    isNotZero = const False
+
+-- | 'False' is 'zero'.
+
+instance FindZero Bool where
+
+    isZero    = not
+    isNotZero = id
+
+-- | 'Number 0' is 'zero'.
+
+instance (Eq n, Num n) => FindZero (Number n) where
+
+    isZero    = (0 ==) . number
+    isNotZero = (0 /=) . number
+
+-- | The empty word is the 'zero' element with respect to the induced language.
+
+instance FindZero (Regular r) where
+
+    isZero Empty = True
+    isZero _     = False
+
+-- | The 'zero' element is @'First' 'Nothing'@.
+
+instance FindZero (First a) where
+
+    isZero = isNothing . getFirst
+
+-- | The 'zero' of pairs is the pair of 'zero'es.
+
+instance (FindZero a, FindZero a') => FindZero (a, a') where
+
+    isZero = uncurry (&&) . (isZero *** isZero)
+
+instance MonoidM () where
+
+    (.*.) _ _ = ()
+    one       = ()
+
+-- | The conjunction of Boolean values.
+
+instance MonoidM Bool where
+
+    (.*.) = (&&)
+    one   = True
+
+-- | The multiplicative number operation.
+
+instance Num n => MonoidM (Number n) where
+
+    (.*.) = (*)
+    one   = 1
+
+-- | The Min-Plus instance in which the multiplication of 'Tropical' values is their additive,
+-- monoidal operation.
+
+instance MonoidA t => MonoidM (Tropical t) where
+
+    Max .*. _   = Max
+    _   .*. Max = Max
+    Min .*. w   = w
+    w   .*. Min = w
+    w1  .*. w2  = Tropical (weight w1 .+. weight w2)
+
+    one = Min
+
+-- | The composition of regular expressions is a multiplicative monoid with respect to
+-- the induced language.
+
+instance MonoidM (Regular r) where
+
+    (.*.) = (.++.)
+    one   = emptyWord
+
+-- | 'ZipList's form an multiplicative monoid with the pointwise multiplication.
+-- The same strategy works every other 'Applicative' instance.
+
+instance MonoidM a => MonoidM (ZipList a) where
+
+    (.*.) = liftA2 (.*.)
+    one   = pure one
+
+-- | List concatenation with the empty list is a multiplicative monoid.
+
+instance MonoidM [a] where
+
+    (.*.)    = (++)
+    one      = []
+    mproduct = concat
+
+-- | In base-4.7.0.1 these two instances are not present automatically.
+
+instance Functor First where
+
+    fmap f = First . fmap f . getFirst
+
+instance Applicative First where
+
+    pure                = First . pure
+    First f <*> First x = First (f <*> x)
+
+-- | 'First' is an 'Applicative' instance and thus the implementation is the same as for 'ZipList'.
+
+instance MonoidM m => MonoidM (First m) where
+
+    (.*.) = liftA2 (.*.)
+    one   = pure one
+
+-- | Usual product construction.
+
+instance (MonoidM m, MonoidM m') => MonoidM (m, m') where
+
+    (ml, mr) .*. (nl, nr) = (ml .*. nl, mr .*. nr)
+    one                   = (one, one)
+
+-- | Functions into an additive semigroup form a semigroup as well by defining
+--   multiplication pointwise, i.e. f .*. g = \x -> f x .*. g x.
+
+instance MonoidM m => MonoidM (x -> m) where
+
+    (.*.) = liftA2 (.*.)
+    one   = pure one
