@@ -16,8 +16,8 @@ cabal.sandbox.config
 *.hp
 
 # Haddock-generated content (for testing)
-src/*/*.html
-src/*/*.js
-src/*/*.png
-src/*/*.css
-src/*/*.gif
+src/*.html
+src/*.js
+src/*.png
+src/*.css
+src/*.gif
