@@ -43,7 +43,12 @@ module Algebraic.Semiring (
     -- * Kleene algebras with an additional type class for checking constants
 
     KleeneAlgebra ( .. ),
+    (^*),
     KleeneAlgebraC,
+
+    -- * A type class for abstract, additive inverses.
+
+    GroupA ( .. ),
 
     -- * Data types with algebraic instances
     
@@ -145,8 +150,8 @@ class MonoidM m where
 
     -- | /n/-fold multiplication of the same element.
 
-    mpower :: m -> Integer -> m
-    mpower x n = mproduct (genericReplicate n x)
+    (.^.) :: m -> Integer -> m
+    x .^. n = mproduct (genericReplicate n x)
 
 -- | A type class that provides a single predicate that can be used to check,
 -- whether an element is \"zero\" or not.
@@ -158,7 +163,7 @@ class MonoidM m where
 -- If a type @a@ has a 'FindZero' and a 'MonoidA' instance,
 -- the following equality should hold for all @x :: a@
 --  
--- @isZero x == True@ @<===>@ @x@ is mathematically equal to 'zero'
+-- @isZero x == True@ @\<===\>@ @x@ is mathematically equal to 'zero'
 
 class FindZero a where
     {-# Minimal isZero | isNotZero #-}
@@ -293,11 +298,64 @@ class IdempotentSemiring k => KleeneAlgebra k where
     plus :: k -> k
     plus x = x .*. star x
 
+-- | This is the same as 'star', but with the @-XPostfixOperators@ extension
+--   switched on this allows a postfix usage.
+
+(^*) :: KleeneAlgebra k => k -> k
+(^*) = star
+
+
 -- | A type class for Kleene algebras in which the constants can be distinguished from other
 -- elements.
 -- Its behaviour is very similar to the one discussed for 'SemiringC'.
 
 class (KleeneAlgebra k, FindZero k, FindOne k) => KleeneAlgebraC k
+
+-- | A type class for additive groups.
+-- The following must hold for all @x, y :: n@:
+-- 
+-- [/subtraction/]
+--   @x '.-.' y = x '.+.' 'neg' y@
+-- [/inverse/]
+--   @'neg' x = 'zero' '.-.' x
+
+class MonoidA a => GroupA a where
+    {-# Minimal inverseA | (.-.) #-}
+    
+    -- | The inversion operation that returns the additive inverse of its argument.
+
+    inverseA :: a -> a
+    inverseA = (.-.) zero
+
+    -- | The subtraction of two values in an additive group.
+
+    (.-.) :: a -> a -> a
+    x .-. y = x .+. inverseA y
+
+instance GroupA () where
+
+    inverseA  = const ()
+    (.-.) _ _ = ()
+
+instance Num n => GroupA (Number n) where
+
+    inverseA = negate
+    (.-.)    = (-)
+
+instance GroupA n => GroupA (ZipList n) where
+
+    inverseA = fmap inverseA
+    (.-.)    = liftA2 (.-.)
+
+instance (GroupA n, GroupA n') => GroupA (n, n') where
+
+    inverseA              = inverseA *** inverseA
+    (al, ar) .-. (bl, br) = (al .-. bl, ar .-. br)
+
+instance GroupA n => GroupA (x -> n) where
+
+    inverseA = fmap inverseA
+    (.-.)    = liftA2 (.-.)
 
 -- | A data type for wrapped numbers similar to the one presented in
 -- <http://hackage.haskell.org/package/weighted-regexp weighted-regexp>.
@@ -570,10 +628,10 @@ instance MonoidM () where
 
 instance MonoidM Bool where
 
-    (.*.)      = (&&)
-    one        = True
-    mproduct   = and
-    mpower b n = n <= 0 || b
+    (.*.)    = (&&)
+    one      = True
+    mproduct = and
+    b .^. n  = n <= 0 || b
 
 -- | The multiplicative number operation.
 
@@ -644,7 +702,7 @@ instance (MonoidM m, MonoidM m') => MonoidM (m, m') where
     (ml, mr) .*. (nl, nr) = (ml .*. nl, mr .*. nr)
     one                   = (one, one)
 
--- | Functions into an additive semigroup form a semigroup as well by defining
+-- | Functions into an multiplicative semigroup form a semigroup as well by defining
 --   multiplication pointwise, i.e. f .*. g = \x -> f x .*. g x.
 
 instance MonoidM m => MonoidM (x -> m) where
@@ -750,3 +808,74 @@ instance (Ord t, MonoidA t) => SemiringC (Tropical t)
 instance SemiringC (Regular r)
 instance (MonoidM m, FindOne m) => SemiringC (First m)
 instance (SemiringC s, SemiringC s') => SemiringC (s, s')
+
+instance IdempotentSemiring ()
+instance IdempotentSemiring Bool
+instance (Ord t, MonoidA t) => IdempotentSemiring (Tropical t)
+
+-- | This is only true with respect to the induced language.
+
+instance IdempotentSemiring (Regular r)
+
+instance IdempotentSemiring s => IdempotentSemiring (ZipList s)
+instance MonoidM m => IdempotentSemiring (First m)
+instance (IdempotentSemiring s, IdempotentSemiring s') => IdempotentSemiring (s, s')
+instance IdempotentSemiring s => IdempotentSemiring (x -> s)
+
+-- | The trivial Kleene algebra.
+
+instance KleeneAlgebra () where
+
+    star = id
+    plus = id
+
+-- | The Boolean Kleene algebra.
+-- By definition @b '.^.' 0 = 'one' = True@ and since @('.+.') = (||)@ we get that
+--   @'star' b = 'one'@.
+
+instance KleeneAlgebra Bool where
+
+    star = const one
+    plus = id
+
+-- | The tropical Kleene algebra.
+-- By definition we have: @ w '.^.' 0 = 'one' = 'Min'@ and @w '.^.' n@ is
+-- either @n * w@ in the overloaded mathematical sense
+-- (if @w &#x2209; {'Min', 'Max'}@), @Min@ (if @w = 'Min'@) or @'Max'@ (if @w = 'Max'@). 
+-- By the order extension @'Min'@ is smaller than any other
+-- element and thus the Kleene closure of any element is @'Min' = 'one'@.
+
+instance (Ord t, MonoidA t) => KleeneAlgebra (Tropical t) where
+
+    star = const one
+    plus = id
+
+-- | This is only true with respect to the induced language.
+
+instance KleeneAlgebra (Regular r) where
+
+    star = repetition
+
+-- | Star closure and Kleene closure is carried out pointwise.
+-- This is possible for all 'Applicative' instances.
+
+instance KleeneAlgebra k => KleeneAlgebra (ZipList k) where
+
+    star = fmap star
+    plus = fmap plus
+
+instance (KleeneAlgebra k, KleeneAlgebra k') => KleeneAlgebra (k, k') where
+
+    star = star *** star
+    plus = plus *** plus
+
+instance KleeneAlgebra k => KleeneAlgebra (x -> k) where
+
+    star = fmap star
+    plus = fmap plus
+
+instance KleeneAlgebraC ()
+instance KleeneAlgebraC Bool
+instance (Ord t, MonoidA t) => KleeneAlgebraC (Tropical t)
+instance KleeneAlgebraC (Regular r)
+instance (KleeneAlgebraC k, KleeneAlgebraC k') => KleeneAlgebraC (k, k')
