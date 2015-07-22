@@ -731,7 +731,7 @@ instance (Num n, Eq n) => FindOne (Number n) where
     isOne (Number 1) = True
     isOne _          = False
 
--- | The multiplicative unit with respect to the tropical multiplication is 'Min'-
+-- | The multiplicative unit with respect to the tropical multiplication is 'Min'.
 
 instance FindOne (Tropical t) where
 
