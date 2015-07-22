@@ -18,6 +18,7 @@ module Auxiliary.General (
     -- * Higher-order functions and combinators
     
     (<.>) ,
+    scaleLeft,    
 
     -- * Comparison
 
@@ -62,5 +63,13 @@ minBy :: (a -> a -> Ordering) -> a -> a -> a
 minBy cmp x y = case cmp x y of
                   LT -> x
                   _  -> y
+
+-- | Lifts a binary function to a function that operates on a structure in its second argument.
+-- The idea is reminiscent of a scalar multiplication for vectors,
+-- which is obtained from lifting the field multiplication to the vector level.
+
+scaleLeft :: Functor f => (a -> b -> c) -> a -> f b -> f c
+scaleLeft = (fmap .)
+
 
 type Arc a = (Int, a)
