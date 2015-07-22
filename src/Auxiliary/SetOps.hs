@@ -107,6 +107,9 @@ class Intersectable t q where
 -- The function 'capWithKey' implements this strategy.
 -- Since its type is essentially the one of 'intersectWithKey' it can be used in instance
 -- declarations.
+-- The particular strategy may not be an optimal one for all containers,
+-- which is why this function is not located in a type class.
+-- As a mnemonic we have \"a cap is an intersection, but not every intersection is a cap\".
 
 capWithKey :: (Lookup l, KeyMaybeFunctor f) => (Key -> a -> b -> c) -> f a -> l b -> f c
 capWithKey op r c = fmapMaybeWithKey (\i x -> scaleLeft (op i) x (clookup i c)) r
@@ -242,6 +245,9 @@ class Complementable t qu where
 -- of 'Lookup' and 'KeyMaybeFunctor'.
 -- This function is an implementation of the strategy intended for 'differenceWith'
 -- and can be used in instance declarations.
+-- Just as with 'intersectWithKey' the implemented strategy is not necessarily optimal for all
+-- data types.
+-- Again, the mnemonic here is \"a dif is a complement, but not every complement is a dif\".
 
 difWith :: (Lookup l, KeyMaybeFunctor f) => 
         (a -> b -> Maybe a) -- ^ operation applied in case of key equality,
