@@ -17,7 +17,15 @@ module Auxiliary.General (
 
     -- * Higher-order functions and combinators
     
-    (<.>) 
+    (<.>) ,
+
+    -- * Comparison
+
+    minBy,
+
+    -- * Graph-related types
+
+    Arc
 
     ) where
 
@@ -46,3 +54,13 @@ module Auxiliary.General (
 infixr 8 <.>
 (<.>) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 (<.>) = (.) . (.)
+
+-- | A non-overloaded version of 'min' that takes an ordering function as an argument
+-- and returns the smaller one. 
+
+minBy :: (a -> a -> Ordering) -> a -> a -> a
+minBy cmp x y = case cmp x y of
+                  LT -> x
+                  _  -> y
+
+type Arc a = (Int, a)
