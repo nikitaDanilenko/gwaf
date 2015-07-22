@@ -213,7 +213,7 @@ instance KeyMaybeFunctor IntMap where
     ffilterWithKey   = IM.filterWithKey
     ffilter          = IM.filter
 
--- | This class merely supplies a function that generalises the 'lookup' function
+-- | This class supplies a function that generalises the 'lookup' function
 -- on lists to indexed containers.
 
 class Lookup l where
