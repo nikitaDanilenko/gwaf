@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Auxiliary.General
+-- Module      :  Auxiliary.KeyedClasses
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  GPL Version 3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
