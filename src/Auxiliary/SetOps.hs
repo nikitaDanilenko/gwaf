@@ -52,8 +52,8 @@ module Auxiliary.SetOps (
 import Data.Foldable                    ( Foldable )
 import qualified Data.Foldable as F     ( foldr )
 
-import Auxiliary.General                ( scaleLeft )
-import Auxiliary.KeyedClasses           ( Key, Lookup (..), KeyMaybeFunctor (..) )
+import Auxiliary.General                ( Key, scaleLeft )
+import Auxiliary.KeyedClasses           ( Lookup (..), KeyMaybeFunctor (..) )
 
 -- | The 'Intersectable' type class abstracts the heterogeneous intersection of indexed containers.
 -- The idea is that the main function 'intersectWithKey' takes a function @op@ that is

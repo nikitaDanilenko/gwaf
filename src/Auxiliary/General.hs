@@ -25,8 +25,10 @@ module Auxiliary.General (
     minBy,
 
     -- * Graph-related types
-
-    Arc
+    
+    Key,
+    Arc,
+    Row
 
     ) where
 
@@ -71,5 +73,6 @@ minBy cmp x y = case cmp x y of
 scaleLeft :: Functor f => (a -> b -> c) -> a -> f b -> f c
 scaleLeft = (fmap .)
 
-
-type Arc a = (Int, a)
+type Key   = Int
+type Arc a = (Key, a)
+type Row a = [Arc a]

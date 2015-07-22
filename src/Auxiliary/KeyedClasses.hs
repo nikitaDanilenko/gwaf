@@ -14,8 +14,6 @@
 -- keys only and do not employ type families to gain generality.
 
 module Auxiliary.KeyedClasses (
-    
-    Key,
 
     -- * Functors with implicit key values
 
@@ -47,9 +45,7 @@ import qualified Data.IntMap.Lazy as IM ( mapWithKey, mapMaybeWithKey, mapMaybe,
                                           filterWithKey, filter )
 import Data.Maybe                       ( fromMaybe, isJust )
 
-import Auxiliary.General                ( (<.>), Arc, minBy )
-
-type Key = Int
+import Auxiliary.General                ( (<.>), Key, Arc, minBy )
 
 -- |
 -- For all kind of indexed containers. The function 'fmap' applies its function
