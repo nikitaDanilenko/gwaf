@@ -211,6 +211,12 @@ instance KeyMaybeFunctor IntMap where
 
 -- | This class supplies a function that generalises the 'lookup' function
 -- on lists to indexed containers.
+-- The following law must be satisfied by instances of this type class:
+-- 
+-- [/lookup/]
+--  @'clookup' = 'flip' 'at'@
+-- 
+-- This implies that @'at' = 'flip' 'clookup'@ holds.
 
 class Lookup l where
     {-# Minimal clookup | at #-}
