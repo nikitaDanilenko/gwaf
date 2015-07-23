@@ -25,6 +25,10 @@ module Auxiliary.General (
 
     minBy,
 
+    -- * Functions on (association) lists
+
+    orderedLookup,
+
     -- * Graph-related types
     
     Key,
@@ -59,14 +63,6 @@ infixr 8 <.>
 (<.>) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 (<.>) = (.) . (.)
 
--- | A non-overloaded version of 'min' that takes an ordering function as an argument
--- and returns the smaller one. 
-
-minBy :: (a -> a -> Ordering) -> a -> a -> a
-minBy cmp x y = case cmp x y of
-                  LT -> x
-                  _  -> y
-
 -- | Lifts a binary function to a function that operates on a structure in its second argument.
 -- The idea is reminiscent of a scalar multiplication for vectors,
 -- which is obtained from lifting the field multiplication to the vector level.
@@ -79,6 +75,26 @@ scaleLeft = (fmap .)
 
 wrap :: Functor f => (a, f b) -> f (a, b)
 wrap = uncurry (fmap . (,))
+
+-- | A non-overloaded version of 'min' that takes an ordering function as an argument
+-- and returns the smaller one. 
+
+minBy :: (a -> a -> Ordering) -> a -> a -> a
+minBy cmp x y = case cmp x y of
+                  LT -> x
+                  _  -> y
+
+-- | This function is a version of 'Prelude.lookup' that assumes the given list to be ordered with
+--   respect to the keys. This way once a key is encountered that is larger than the one we are
+--   looking for, the search can be stopped, since it cannot be contained in the remaining list.
+--   The precondition that the list is increasingly sorted with respect to the indices is not 
+--   checked.
+
+orderedLookup :: Ord k => k -> [(k, v)] -> Maybe v
+orderedLookup _   []                          = Nothing
+orderedLookup key ((k, v) : kvs ) | k == key  = Just v
+                                  | k < key   = orderedLookup key kvs
+                                  | otherwise = Nothing
 
 -- | A type for keys in key-value pairs and association lists.
 
