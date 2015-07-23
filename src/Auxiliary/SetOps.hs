@@ -53,7 +53,7 @@ import Data.Foldable                    ( Foldable )
 import qualified Data.Foldable as F     ( foldr )
 
 import Auxiliary.General                ( Key, scaleLeft )
-import Auxiliary.KeyedClasses           ( Lookup (..), KeyMaybeFunctor (..) )
+import Auxiliary.KeyedClasses           ( Lookup, clookup, KeyMaybeFunctor, fmapMaybeWithKey )
 
 -- | The 'Intersectable' type class abstracts the heterogeneous intersection of indexed containers.
 -- The idea is that the main function 'intersectWithKey' takes a function @op@ that is
