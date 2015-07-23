@@ -19,6 +19,13 @@
 -- This is possible with the notion of heterogeneous set operations.
 -- Most of the set operations provided by this module are direct generalisations of functions
 -- that are usually provided for key-value maps like 'IntMap's.
+-- 
+-- The instances of the heterogeneous set operations are organised as follows:
+-- 
+-- * the homogeneous instances for data types defined in this package are defined
+--   together with the data type
+-- * all other instances (heterogeneous ones and homogeneous instances of data types defined
+--   elsewhere) are provided in "Auxiliary.SetOpsInstances".
 
 {-# LANGUAGE MultiParamTypeClasses #-}
 
