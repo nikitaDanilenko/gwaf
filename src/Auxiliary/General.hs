@@ -300,7 +300,7 @@ differenceBy cmp = differenceByWith cmp (\_ _ -> Nothing)
 
 -- | A version of 'differenceBy' that uses the 'compare' function on ordered keys.
 
-differenceByFst :: Ord k => [(k, v)] -> [(k, v)] -> [(k, v)]
+differenceByFst :: Ord k => [(k, v)] -> [(k, w)] -> [(k, v)]
 differenceByFst = differenceBy compareFirsts
 
 -- | A merging scheme for symmetric difference.
