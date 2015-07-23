@@ -80,6 +80,16 @@ scaleLeft = (fmap .)
 wrap :: Functor f => (a, f b) -> f (a, b)
 wrap = uncurry (fmap . (,))
 
+-- | A type for keys in key-value pairs and association lists.
+
 type Key   = Int
+
+-- | An arc is a key-value pair.
+-- The name originates from the graph-theoretic interpretation that an arc points to its
+-- key (vertex) and is labelled with its value.
+
 type Arc a = (Key, a)
+
+-- | A row is simply an association list.
+
 type Row a = [Arc a]
