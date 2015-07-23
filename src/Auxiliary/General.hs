@@ -30,6 +30,8 @@ module Auxiliary.General (
     -- * Comparison
 
     minBy,
+    dcomparing,
+    compareFirsts,
 
     -- * Functions on (association) lists
 
@@ -52,11 +54,18 @@ module Auxiliary.General (
 
     -- ** Complement functions
 
-    minusByWith,
-    minusWith,
-    minusByFstWith,
-    minusBy,
-    minusByFst,
+    differenceByWith,
+    differenceWith,
+    differenceByFstWith,
+    differenceBy,
+    differenceByFst,
+
+    -- ** Symmetric difference
+
+    symmetricDifferenceByWith,
+    symmetricDifferenceWith,
+    symmetricDifferenceByFstWith,
+    symmetricDifferenceByFst,
 
     -- * Graph-related types
     
@@ -69,7 +78,7 @@ module Auxiliary.General (
 import Data.Ord ( comparing )
 
 -- | 
--- This function is known as '(.:)' from the Haskell wiki and the functional
+-- This function is known as @('.:')@ from the Haskell wiki and the functional
 -- graph library <http://hackage.haskell.org/package/fgl fgl> by Martin Erwig.
 -- It is used to compose a function
 -- @f :: a -> b -> c@ with a function @g :: c -> d@ such that
@@ -182,6 +191,8 @@ mergeWith cmp lEmpty rEmpty lt eq gt = merge where
 -- If an element occurs in both lists,
 -- the two occurrences are combined with the supplied combination function and the result is
 -- added to the result list.
+-- Otherwise (if the element occurs in only one of the lists) the element is added to the
+-- result list unchanged.
 -- For example we have the following results:
 -- 
 -- > unionByWith compare (+) [1,2,3] [2,3,5] 
@@ -205,11 +216,12 @@ unionWith = unionByWith compare
 unionByFstWith :: Ord k => (v -> v -> v) -> [(k, v)] -> [(k, v)] -> [(k, v)]
 unionByFstWith = unionByWith (comparing fst) . onSecond
 
--- | An intersectionion merging pattern.
+-- | An intersection merging pattern.
 -- This function takes a comparison operator and a function that is applied in case of equality.
--- It returns a binary list function that behaves like an intersectionion of abstractly ordered lists.
+-- It returns a binary list function that behaves like an intersection of abstractly ordered lists.
 -- If an element occurs in both lists, these occurrences are combined with the supplied combination
 -- function and the result is added to the result list.
+-- Otherwise (if an element occurs in only one of the lists) the element is ignored.
 -- For example we have the following applications:
 -- 
 -- > intersectionByWith compare (+) [1,2,3] [2,3,5] 
@@ -239,8 +251,8 @@ intersectionByFstWith = intersectionByWith compareFirsts . onSecond
 intersectionWith :: Ord a => (a -> a -> a) -> [a] -> [a] -> [a]
 intersectionWith = intersectionByWith compare
 
--- | A left-biased intersectionion that uses a supplied comparison function.
--- Since the comparison function is heterogeneous, so is the resulting intersectionion.
+-- | A left-biased intersection that uses a supplied comparison function.
+-- Since the comparison function is heterogeneous, so is the resulting intersection.
 
 intersectionBy :: (a -> b -> Ordering) -> [a] -> [b] -> [a]
 intersectionBy cmp = intersectionByWith cmp const
@@ -252,42 +264,84 @@ intersectionBy cmp = intersectionByWith cmp const
 -- If an element occurs in both lists, these occurrences are combined with the supplied combination
 -- function.
 -- The result of this combination is checked for being 'Nothing' or @'Just' r@.
+-- If an element occurs in the first list only, it is added to the result
+-- and if an element occurs in the second list only, it is ignored.
 -- In the first case, nothing is added to the result list,
 -- in the second case the element @r@ is added to the result list.
--- Below are some example applications of 'minusByWith'.
+-- Below are some example applications of 'differenceByWith'.
 -- 
--- > minusByWith compare (\_ _ -> Nothing) [1, 2, 3] [2, 3, 5]
+-- > differenceByWith compare (\_ _ -> Nothing) [1, 2, 3] [2, 3, 5]
 -- >    = [1]
--- > minusByWith compare (Just <.> (+)) [1, 2, 3] [2, 3, 5]
+-- > differenceByWith compare (Just <.> (+)) [1, 2, 3] [2, 3, 5]
 -- >    = [1, 4, 6]
--- > minusByWith (comparing fst) (\_ _ -> Nothing) 
+-- > differenceByWith (comparing fst) (\_ _ -> Nothing) 
 -- >             [(1, "M"), (3, "n"), (4, "i")] [(2, "o"), (3, "o"), (5, "d")]
 -- >    = [(1,"M"),(4,"i")]
 
-minusByWith:: (a -> b -> Ordering) -> (a -> b -> Maybe a) -> [a] -> [b] -> [a]
-minusByWith cmp op = mergeWith cmp (const []) id (consWith const) (maybe id (:) <.> op) idThird
+differenceByWith:: (a -> b -> Ordering) -> (a -> b -> Maybe a) -> [a] -> [b] -> [a]
+differenceByWith cmp op = mergeWith cmp (const []) id (consWith const) (maybe id (:) <.> op) idThird
 
--- | An instance of 'minusByWith' that uses the 'compare' function of ordered types.
+-- | An instance of 'differenceByWith' that uses the 'compare' function of ordered types.
 
-minusWith :: Ord a => (a -> a -> Maybe a) -> [a] -> [a] -> [a]
-minusWith = minusByWith compare
+differenceWith :: Ord a => (a -> a -> Maybe a) -> [a] -> [a] -> [a]
+differenceWith = differenceByWith compare
 
--- | A version of 'minusByWith' that uses ordered keys for the comparison of values in
+-- | A version of 'differenceByWith' that uses ordered keys for the comparison of values in
 -- an association list.
 
-minusByFstWith :: Ord k => (a -> b -> Maybe a) -> [(k, a)] -> [(k, b)] -> [(k, a)]
-minusByFstWith op = minusByWith compareFirsts (wrap <.> onSecond op)
+differenceByFstWith :: Ord k => (a -> b -> Maybe a) -> [(k, a)] -> [(k, b)] -> [(k, a)]
+differenceByFstWith op = differenceByWith compareFirsts (wrap <.> onSecond op)
 
--- | A variant of 'minusByWith' that takes a comparison function and then removes all values
+-- | A variant of 'differenceByWith' that takes a comparison function and then removes all values
 -- contained in the second list from the first one.
 
-minusBy :: (a -> b -> Ordering) -> [a] -> [b] -> [a]
-minusBy cmp = minusByWith cmp (\_ _ -> Nothing)
+differenceBy :: (a -> b -> Ordering) -> [a] -> [b] -> [a]
+differenceBy cmp = differenceByWith cmp (\_ _ -> Nothing)
 
--- | A version of 'minusBy' that uses the 'compare' function on ordered keys.
+-- | A version of 'differenceBy' that uses the 'compare' function on ordered keys.
 
-minusByFst :: Ord k => [(k, v)] -> [(k, v)] -> [(k, v)]
-minusByFst = minusBy compareFirsts
+differenceByFst :: Ord k => [(k, v)] -> [(k, v)] -> [(k, v)]
+differenceByFst = differenceBy compareFirsts
+
+-- | A merging scheme for symmetric difference.
+-- This function takes a comparison operator and a function that is applied in case of equality.
+-- It returns a binary list function that behaves like a symmetric difference
+-- of abstractly ordered lists.
+-- If an element occurs in both lists, these occurrences are combined with the supplied combination
+-- function.
+-- The result of this combination is checked for being 'Nothing' or @'Just' r@.
+-- In the first case, nothing is added to the result list,
+-- in the second case the element @r@ is added to the result list.
+-- If an element occurs in only one of the lists, it is added to the result list unchanged
+-- Below are some example applications of 'symmetricDifferenceByWith'.
+-- 
+-- > symmetricDifferenceByWith compare (\_ _  -> Nothing) [1,2,3] [2,3,5]
+-- >    = [1,5]
+-- > symmetricDifferenceByWith compare (Just <.> (+)) [1,2,3] [2,3,5]
+-- >    = [1,4,6,5]
+-- > symmetricDifferenceByWith (comparing fst) (\_ _ -> Nothing) 
+-- >                           [(1, "M"), (3, "n"), (4, "i")] [(2, "o"), (3, "o"), (5, "d")]
+-- >    = [(1,"M"),(2,"o"),(4,"i"),(5,"d")]
+
+symmetricDifferenceByWith :: (a -> a -> Ordering) -> (a -> a -> Maybe a) -> [a] -> [a] -> [a]
+symmetricDifferenceByWith cmp op = 
+    mergeWith cmp id id (consWith const) (maybe id (:) <.> op) (consWith (flip const))
+
+-- | An instance of 'symmetricDifferenceByWith' that uses the 'compare' function of ordered types.
+
+symmetricDifferenceWith :: Ord a => (a -> a -> Maybe a) -> [a] -> [a] -> [a]
+symmetricDifferenceWith = symmetricDifferenceByWith compare
+
+-- | An instance of 'symmetricDifferenceByWith' that uses ordered keys for the comparison of
+-- elements in an association list.
+
+symmetricDifferenceByFstWith :: Ord k => (v -> v -> Maybe v) -> [(k, v)] -> [(k, v)] -> [(k, v)]
+symmetricDifferenceByFstWith op = symmetricDifferenceByWith (comparing fst) (wrap <.> onSecond op)
+
+-- | A version of 'symmetricDifferenceByFstWith' that removes all elements that occur in both lists.
+
+symmetricDifferenceByFst :: Ord k => [(k, v)] -> [(k, v)] -> [(k, v)]
+symmetricDifferenceByFst = symmetricDifferenceByFstWith (\_ _ -> Nothing)
 
 -- | Given a function @f@, two arguments @x :: a, y :: b@ and a list @l :: [c]@,
 -- this function returns the list @f x y : l@.
