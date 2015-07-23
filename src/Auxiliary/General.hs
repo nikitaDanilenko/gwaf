@@ -15,10 +15,11 @@
 
 module Auxiliary.General (
 
-    -- * Higher-order functions and combinators
+    -- * Combinators, operators and higher-order functions
     
     (<.>) ,
-    scaleLeft,    
+    scaleLeft,
+    wrap,
 
     -- * Comparison
 
@@ -72,6 +73,12 @@ minBy cmp x y = case cmp x y of
 
 scaleLeft :: Functor f => (a -> b -> c) -> a -> f b -> f c
 scaleLeft = (fmap .)
+
+-- | Maps a pair whose second component is a 'Functor' to a 'Functor' containing the pair.
+-- For example @wrap ('a', Just 5) = Just ('a', 5)@.
+
+wrap :: Functor f => (a, f b) -> f (a, b)
+wrap = uncurry (fmap . (,))
 
 type Key   = Int
 type Arc a = (Key, a)
