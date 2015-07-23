@@ -65,47 +65,47 @@ import Auxiliary.KeyedClasses           ( Lookup (..), KeyMaybeFunctor (..) )
 -- The following laws should be satisfied for instances of 'Intersectable'.
 -- 
 -- [/intersection without keys/]
---      @'intersectWith' = 'intersectWithKey' '.' 'const'@
+--      @'intersectionWith' = 'intersectionWithKey' '.' 'const'@
 -- 
 -- [/left-biased intersection/]
---      @('//\') = 'intersectWith' 'const'@
+--      @('//\') = 'intersectionWith' 'const'@
 -- 
 -- [/right-biased intersection/]
---      @('/\\') = 'intersectWith' ('flip' 'const')@
+--      @('/\\') = 'intersectionWith' ('flip' 'const')@
 -- 
 -- The nomenclature is a mnemonic for the fact that the first argument is __t__raversed
 -- and the second argument is __q__ueried.
 
 class Intersectable t q where
-    {-# Minimal intersectWithKey #-}
+    {-# Minimal intersectionWithKey #-}
 
     -- | A function that takes an operation that is applied in case of to key-value pairs
     -- from the two structures that have the same key.
-    -- The result of this application is added to the result of 'intersectWithKey'.
+    -- The result of this application is added to the result of 'intersectionWithKey'.
 
-    intersectWithKey :: (Key -> a -> b -> c) -> t a -> q b -> t c
+    intersectionWithKey :: (Key -> a -> b -> c) -> t a -> q b -> t c
 
-    -- | A variant of 'intersectWithKey' that ignores the key values.
+    -- | A variant of 'intersectionWithKey' that ignores the key values.
 
-    intersectWith    :: (a -> b -> c)      -> t a -> q b -> t c
-    intersectWith = intersectWithKey . const
+    intersectionWith    :: (a -> b -> c)      -> t a -> q b -> t c
+    intersectionWith = intersectionWithKey . const
 
     -- | Left-biased intersection that ignores the values in the second structure.
     
     infixr 6 //\
     (//\) :: t a -> q b -> t a
-    (//\) = intersectWith const
+    (//\) = intersectionWith const
 
     -- | Right-biased intersection that ignores the values in the first structure.
 
     infixr 6 /\\
     (/\\) :: t a -> q b -> t b
-    (/\\) = intersectWith (flip const)
+    (/\\) = intersectionWith (flip const)
 
 -- | The strategy of traversing one structure while querying another can be expressed in terms
 -- of the type classes 'Lookup' and 'KeyMaybeFunctor'.
 -- The function 'capWithKey' implements this strategy.
--- Since its type is essentially the one of 'intersectWithKey' it can be used in instance
+-- Since its type is essentially the one of 'intersectionWithKey' it can be used in instance
 -- declarations.
 -- The particular strategy may not be an optimal one for all containers,
 -- which is why this function is not located in a type class.
@@ -245,7 +245,7 @@ class Complementable t qu where
 -- of 'Lookup' and 'KeyMaybeFunctor'.
 -- This function is an implementation of the strategy intended for 'differenceWith'
 -- and can be used in instance declarations.
--- Just as with 'intersectWithKey' the implemented strategy is not necessarily optimal for all
+-- Just as with 'intersectionWithKey' the implemented strategy is not necessarily optimal for all
 -- data types.
 -- Again, the mnemonic here is \"a dif is a complement, but not every complement is a dif\".
 
