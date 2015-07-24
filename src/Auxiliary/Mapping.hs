@@ -21,6 +21,10 @@ module Auxiliary.Mapping (
 
     Mapping ( .. ),
     transform,
+    toMappingFrom,
+    toMappingWith,
+    toMapping,
+    fromMapping,
 
     -- * Mappings with variable sizes
     
@@ -103,6 +107,29 @@ class (KeyMaybeFunctor m, Lookup m) => Mapping m where
 
 transform :: (Mapping m, Mapping m') => m a -> m' a
 transform = fromRow . toRow
+
+-- | Creates a new mapping from a list of keys and a function that
+-- maps keys to values.
+-- Essentially, the resulting mapping is a restriction of the first argument
+-- to the second one.
+
+toMappingFrom :: Mapping m => (Key -> a) -> [Key] -> m a
+toMappingFrom f = fromRow . map (id &&& f)
+
+-- | Creates a new mapping from a key list labelling every key with the same value.
+
+toMappingWith :: Mapping m => a -> [Key] -> m a
+toMappingWith = toMappingFrom . const
+
+-- | Creates a new mapping from a list of keys labelling every key with '()'.
+
+toMapping :: Mapping m => [Key] -> m ()
+toMapping = toMappingWith ()
+
+-- | The same as 'keys'.
+
+fromMapping :: Mapping m => m a -> [Key]
+fromMapping = keys
 
 -- | 'IntMap's provide all required functions directly.
     
