@@ -40,7 +40,7 @@ import qualified Data.Array as A ( (!), bounds )
 import Data.Maybe                ( catMaybes, mapMaybe )
 import Test.QuickCheck           ( Arbitrary, arbitrary )
 
-import Auxiliary.General         ( Key, wrap )
+import Auxiliary.General         ( Key, wrap, mkArbitrary )
 import Auxiliary.KeyedClasses    ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybeWithKey,
                                    Lookup, clookup )
 import Auxiliary.Mapping         ( Mapping, values, size, toRow, fromRow )
@@ -89,7 +89,7 @@ instance Show a => Show (SafeArray a) where
 
 instance Arbitrary a => Arbitrary (SafeArray a) where
 
-  arbitrary = fmap fromRow arbitrary
+  arbitrary = fmap fromRow mkArbitrary
 
 -- | Creates a new 'SafeArray' of a fixed size where every element is 'Nothing'.
 -- Since modification of arrays is linear in the size of the array,
