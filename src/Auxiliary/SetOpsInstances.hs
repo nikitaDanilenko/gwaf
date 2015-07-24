@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Auxiliary.SafeArray
+-- Module      :  Auxiliary.SetOpsInstances
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  GPL Version 3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
@@ -18,7 +18,7 @@
 -- * 'Intersectable'  'AList'  'SafeArray'
 -- * 'Intersectable'  'IntMap' 'SafeArray'
 -- * 'Unionable'      'AList'  'IntMap'
--- * 'Unionable       'IntMap' 'IntMap'
+-- * 'Unionable'      'IntMap' 'IntMap'
 -- * 'Complementable' 'AList'  'IntMap'
 -- * 'Complementable' 'IntMap' 'IntMap'
 -- * 'SetOps'         'AList'  'IntMap'
