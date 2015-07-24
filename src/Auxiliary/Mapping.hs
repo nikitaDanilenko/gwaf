@@ -39,13 +39,12 @@ module Auxiliary.Mapping (
 import Control.Arrow                      ( (&&&) )
 import Data.Foldable                      ( Foldable )
 import Data.IntMap.Lazy                   ( IntMap )
-import qualified Data.IntMap.Lazy as IM   ( toAscList, fromList, empty, keys,
-                                            elems, null, singleton, findMin,
-                                            unions, size, insertWith, insert, delete )
-import Data.Maybe                         ( listToMaybe, fromMaybe )
+import qualified Data.IntMap.Lazy as IM   ( toAscList, fromList, empty, keys, elems, null, findMin,
+                                            size, insertWith, insert, delete )
+import Data.Maybe                         ( listToMaybe )
 
 import Auxiliary.General                  ( Key, Arc, Row, (<.>) )
-import Auxiliary.KeyedClasses             ( Lookup (..), maybeAt, KeyMaybeFunctor (..),
+import Auxiliary.KeyedClasses             ( Lookup (..), KeyMaybeFunctor (..),
                                             KeyFunctor (..), foldrWithKey )
 
 -- | The 'Mapping' type class is an extension of the type classes 'KeyMaybeFunctor' and
