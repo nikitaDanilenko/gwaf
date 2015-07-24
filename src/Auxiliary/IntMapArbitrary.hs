@@ -17,7 +17,7 @@ import Data.IntMap       ( IntMap )
 import Test.QuickCheck   ( Arbitrary, arbitrary )
 
 import Auxiliary.General ( mkArbitrary )
-import Data.Mapping      ( fromRow )
+import Auxiliary.Mapping ( fromRow )
 
 instance Arbitrary a => Arbitrary (IntMap a) where
 
