@@ -31,7 +31,7 @@ import Data.Maybe                   ( mapMaybe )
 import Data.Ord                     ( comparing )
 import Test.QuickCheck              ( Arbitrary, arbitrary, shrink )
 
-import Auxiliary.General            ( Key, Row, wrap, orderedLookup, unionByFstWith,
+import Auxiliary.General            ( Row, wrap, orderedLookup, unionByFstWith,
                                       intersectionByWith, intersectionByFstWith, compareFirsts,
                                       differenceByFstWith, differenceByFst, 
                                       symmetricDifferenceByFst, mkArbitrary )
