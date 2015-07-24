@@ -36,6 +36,7 @@ module Auxiliary.Mapping (
 
     ) where
 
+import Control.Arrow                      ( (&&&) )
 import Data.Foldable                      ( Foldable )
 import Data.IntMap.Lazy                   ( IntMap )
 import qualified Data.IntMap.Lazy as IM   ( toAscList, fromList, empty, keys,
