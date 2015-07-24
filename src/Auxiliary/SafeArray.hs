@@ -36,8 +36,9 @@ import Control.Applicative       ( liftA2 )
 import Control.Monad             ( mplus )
 import Data.Array                ( Array, elems, listArray, assocs, array,
                                    range, inRange )
-import qualified Data.Array as A ( (!), bounds, indices )
-import Data.Maybe                ( catMaybes, isJust, mapMaybe )
+import qualified Data.Array as A ( (!), bounds )
+import Data.Maybe                ( catMaybes, mapMaybe )
+import Test.QuickCheck           ( Arbitrary, arbitrary )
 
 import Auxiliary.General         ( Key, wrap )
 import Auxiliary.KeyedClasses    ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybeWithKey,
@@ -52,6 +53,7 @@ import Auxiliary.SetOps          ( Intersectable, intersectionWithKey, Unionable
 -- they are in the array range) does not result in an error.
 
 newtype SafeArray a = Safe { safeArray :: Array Key (Maybe a) }
+  deriving Eq
 
 -- | A safe variant of a query operation on arrays.
 -- If the index is out of bounds, 'Nothing' is returned.
@@ -84,6 +86,10 @@ instance Lookup SafeArray where
 instance Show a => Show (SafeArray a) where
     
     show = show . safeArray
+
+instance Arbitrary a => Arbitrary (SafeArray a) where
+
+  arbitrary = fmap fromRow arbitrary
 
 -- | Creates a new 'SafeArray' of a fixed size where every element is 'Nothing'.
 -- Since modification of arrays is linear in the size of the array,
