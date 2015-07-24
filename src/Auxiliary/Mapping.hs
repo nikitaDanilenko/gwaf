@@ -34,7 +34,7 @@ module Auxiliary.Mapping (
 
 import Data.Foldable                      ( Foldable )
 import Data.IntMap.Lazy                   ( IntMap )
-import qualified Data.IntMap.Lazy as IM   ( toAscList, fromAscList, empty, keys,
+import qualified Data.IntMap.Lazy as IM   ( toAscList, fromList, empty, keys,
                                             elems, null, singleton, findMin,
                                             unions, size, insertWith, insert, delete )
 import Data.Maybe                         ( listToMaybe, fromMaybe )
@@ -109,7 +109,7 @@ transform = fromRow . toRow
 instance Mapping IntMap where
      
     toRow   = IM.toAscList
-    fromRow = IM.fromAscList
+    fromRow = IM.fromList
     size    = IM.size
     some m  | IM.null m = Nothing
             | otherwise = Just (IM.findMin m)
