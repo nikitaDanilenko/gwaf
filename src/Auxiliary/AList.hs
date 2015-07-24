@@ -115,28 +115,27 @@ instance MappingV AList where
 
 instance Intersectable AList AList where
 
-    intersectionWithKey op r = 
-        AL . intersectionByWith compareFirsts (fmap . uncurry op) (asList r) . asList
-    intersectionWith op r    = AL . intersectionByFstWith op (asList r) . asList
+    intersectionWithKey op = mapInner . intersectionByWith compareFirsts (fmap . uncurry op) . asList
+    intersectionWith op    = mapInner . intersectionByFstWith op . asList
 
 -- | Union operations have a structural complexity /O/(@'size' left@ + @'size' right@).
 
 instance Unionable AList AList where
 
-    unionWith op r   = AL . unionByFstWith op (asList r) . asList
+    unionWith op   = mapInner . unionByFstWith op . asList
 
 -- | Difference operations have a structural complexity /O/(@'size' left@ + @'size' right@).
 
 instance Complementable AList AList where
 
-    differenceWith op r = AL . differenceByFstWith op (asList r) . asList
-    differenceWith2     = differenceWith
+    differenceWith op = mapInner . differenceByFstWith op . asList
+    differenceWith2   = differenceWith
 
 -- | All set operations have a structural complexity of /O/(@'size' left@ + @'size' right@).
 
 instance SetOps AList AList where
 
-    symDifference r     = AL . symmetricDifferenceByFst (asList r) . asList
+    symDifference = mapInner . symmetricDifferenceByFst . asList
 
 instance Arbitrary a => Arbitrary (AList a) where
 
