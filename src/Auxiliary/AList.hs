@@ -29,12 +29,12 @@ import Data.Function                ( on )
 import Data.List                    ( groupBy, sortBy, subsequences )
 import Data.Maybe                   ( mapMaybe )
 import Data.Ord                     ( comparing )
-import Test.QuickCheck              ( Arbitrary, arbitrary, shrink, choose, sized, suchThat )
+import Test.QuickCheck              ( Arbitrary, arbitrary, shrink )
 
 import Auxiliary.General            ( Key, Row, wrap, orderedLookup, unionByFstWith,
                                       intersectionByWith, intersectionByFstWith, compareFirsts,
                                       differenceByFstWith, differenceByFst, 
-                                      symmetricDifferenceByFst )
+                                      symmetricDifferenceByFst, mkArbitrary )
 import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybe,
                                       fmapMaybeWithKey, Lookup, clookup )
 import Auxiliary.Mapping            ( Mapping, toRow, fromRow, MappingV, empty, insertWith, delete )
@@ -140,8 +140,5 @@ instance SetOps AList AList where
 
 instance Arbitrary a => Arbitrary (AList a) where
 
-    arbitrary = sized $ \n -> do k <- choose(0, n)
-                                 is <- sequence [suchThat arbitrary (>= 0) | _ <- [0 .. k]]
-                                 es <- arbitrary
-                                 return (mkAList (zip is es))
+    arbitrary = fmap fromRow mkArbitrary
     shrink    = map AL . subsequences . asList
