@@ -71,11 +71,16 @@ module Auxiliary.General (
     
     Key,
     Arc,
-    Row
+    Row,
+
+    -- * 'Arbitrary' helper function
+    
+    mkArbitrary
 
     ) where
 
-import Data.Ord ( comparing )
+import Data.Ord        ( comparing )
+import Test.QuickCheck ( Arbitrary, Gen, sized, choose, suchThat, arbitrary ) 
 
 -- | 
 -- This function is known as @('.:')@ from the Haskell wiki and the functional
@@ -367,3 +372,12 @@ type Arc a = (Key, a)
 -- | A row is simply an association list.
 
 type Row a = [Arc a]
+
+-- | This 'Arbitrary' generator creates an arbitrary 'Row',
+-- such that its indices are in the range @[0 .. n]@ for some natural number /n/.
+
+mkArbitrary :: Arbitrary a => Gen (Row a)
+mkArbitrary =  sized $ \n -> do k <- choose (0, n)
+                                is <- sequence [suchThat arbitrary (>= 0) | _ <- [0 .. k]]
+                                es <- arbitrary
+                                return (zip is es)
