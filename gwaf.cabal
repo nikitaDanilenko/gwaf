@@ -34,7 +34,7 @@ library
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    MultiParamTypeClasses 
-  build-depends:       base >=4.7 && <4.8, QuickCheck >=2.8 && <2.9, containers >=0.5 && <0.6, hspec
+  build-depends:       base >=4.7 && <4.8, QuickCheck >=2.8 && <2.9, containers >=0.5 && <0.6, array >=0.4, hspec
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -45,7 +45,8 @@ Test-Suite allTests
   Ghc-Options:          -Wall
   Main-Is:              Spec.hs
   Build-Depends:        base
-                      , containers
+                      , containers >= 0.5
+                      , array >=0.4
                       , hspec
                       , QuickCheck
   
