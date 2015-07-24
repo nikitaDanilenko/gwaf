@@ -28,6 +28,7 @@ module Auxiliary.SafeArray (
   zipWithOpKey,
   zipWithOp,
   zipWithDownKey,
+  zipWithDown,
   zipWithUp
 
   ) where
@@ -40,12 +41,13 @@ import qualified Data.Array as A ( (!), bounds )
 import Data.Maybe                ( catMaybes, mapMaybe )
 import Test.QuickCheck           ( Arbitrary, arbitrary )
 
-import Auxiliary.General         ( Key, wrap, mkArbitrary )
+import Auxiliary.General         ( Key, wrap, mkArbitrary, unionByFstWith )
 import Auxiliary.KeyedClasses    ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybeWithKey,
                                    Lookup, clookup )
 import Auxiliary.Mapping         ( Mapping, values, size, toRow, fromRow )
-import Auxiliary.SetOps          ( Intersectable, intersectionWithKey, Unionable, unionWith,
-                                   Complementable, differenceWith, differenceWith2, SetOps )
+import Auxiliary.SetOps          ( Intersectable, intersectionWithKey, intersectionWith,
+                                   Unionable, unionWith, Complementable, differenceWith,
+                                   differenceWith2, SetOps )
 
 -- | A safe array variant in the sense that queries behave rather as a lookup and not
 -- as a pure indexing operation.
@@ -120,8 +122,9 @@ fullSize = snd . bounds
 instance Mapping SafeArray where
 
   toRow       = mapMaybe wrap . toFullList
-  fromRow ivs = Safe (array (0, n) (map (fmap Just) ivs))
-    where n = maximum (map fst ivs)
+  fromRow ivs = Safe (array (0, n) 
+    (unionByFstWith mplus (zip [0 .. ] (replicate n Nothing)) (map (fmap Just) ivs)))
+      where n = foldr (max . fst) (-1) ivs
 
   values      = catMaybes . elems . safeArray
   
@@ -173,6 +176,7 @@ zipWithUp op = zipWithOp op'
 instance Intersectable SafeArray SafeArray where
 
   intersectionWithKey = zipWithDownKey
+  intersectionWith    = zipWithDown
 
 -- | The union operation has an /O/@('max' ('fullSize' left) ('fullSize' right))@ complexity.
 
