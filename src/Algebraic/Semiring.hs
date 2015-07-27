@@ -25,13 +25,15 @@
 
 module Algebraic.Semiring (
     
-    -- * Additive monoids with an additional type class for checking constants
+    -- * Additive semigroups and monoids with an additional type class for checking constants
     
+    SemigroupA ( .. ),
     MonoidA ( .. ),
     FindZero ( .. ),
     
-    -- * Multiplicative monoids with an additional type class for checking constants
+    -- * Multiplicative semigroups and monoids with an additional type class for checking constants
     
+    SemigroupM ( .. ),
     MonoidM ( .. ),
     FindOne ( .. ),
     
@@ -77,14 +79,29 @@ import Data.Ord            ( comparing )
 import Auxiliary.General   ( (<.>) )
 
 -- | 
--- A type class for additive monoids.
+-- A type class for additive semigroupgs.
 -- The prerequisite of additivity is merely a notational choice 
 -- and does not come with any additional requirements.
--- Instances of this type class are required to satisfy the rules
+-- Instances of this type class are required to satisfy the rule
 -- for all @a, b, c :: m@
 --  
 -- [/associativity/]
 --    @a '.+.' (b '.+.' c) = (a '.+.' b) '.+.' c@
+
+class SemigroupA a where
+  {-# Minimal (.+.) #-}
+
+  -- | A binary associative operation.
+
+  infixr 5 .+.
+  (.+.) :: a -> a -> a
+
+-- | 
+-- A type class for additive monoids.
+-- The prerequisite of additivity is merely a notational choice 
+-- and does not come with any additional requirements.
+-- Instances of this type class are required to satisfy the rule
+-- for all @a, b :: m@
 -- 
 -- [/neutrality/]
 --    @a '.+.' 'zero' = a = 'zero' '.+.' a@
@@ -99,14 +116,8 @@ import Auxiliary.General   ( (<.>) )
 -- [/mtimes/]
 --    @'mtimes' n x = 'msum' ('genericReplicate' n x)@
 
-class MonoidA a where
-    {-# Minimal (.+.), zero | msum #-}
-
-    -- | A binary associative operation.
-
-    infixr 5 .+.
-    (.+.) :: a -> a -> a
-    a .+. b = msum [a, b]
+class SemigroupA a => MonoidA a where
+    {-# Minimal zero | msum #-}
 
     -- | 
     -- A neutral element with respect to @('.+.')@.
@@ -126,14 +137,29 @@ class MonoidA a where
     mtimes n x = msum (genericReplicate n x)
 
 -- | 
--- A type class for multiplicative monoids.
--- This structure is isomorphic to the 'MonoidA' structure,
+-- A type class for multiplicative semigroups.
+-- This structure is isomorphic to the 'SemigroupA' structure,
 -- but has a different fixity for the monoid operation.
--- Instances of this type class are required to satisfy the rules
+-- Instances of this type class are required to satisfy the rule
 -- for all @a, b, c :: m@
 --   
 -- [/associativity/]
 --    @a '.*.' (b '.*.' c) = (a '.*.' b) '.*.' c@
+
+class SemigroupM m where
+  {-# Minimal (.*.) #-}
+
+  -- | A binary associative operation.
+
+  infixr 6 .*.
+  (.*.) :: m -> m -> m
+
+-- | 
+-- A type class for multiplicative monoids.
+-- This structure is isomorphic to the 'MonoidA' structure,
+-- but has a different fixity for the monoid operation.
+-- Instances of this type class are required to satisfy the rule
+-- for all @a, b :: m@
 --  
 -- [/neutrality/]
 --    @a '.*.' 'one' = a = 'one' '.*.' a@
@@ -148,30 +174,25 @@ class MonoidA a where
 -- [/power/]
 --    @x '.^.' y = 'mproduct' ('genericReplicate' n x)@
 
-class MonoidM m where
-    {-# Minimal one, (.*.) | mproduct #-}
+class SemigroupM m => MonoidM m where
 
-    -- | A binary associative operation.
+  {-# Minimal one | mproduct #-}
 
-    infixr 6 .*.
-    (.*.) :: m -> m -> m
-    a .*. b = mproduct [a, b]
+  -- | A neutral element with respect to @('.*.')@.
+  --   This element is automatically unique.
 
-    -- | A neutral element with respect to @('.*.')@.
-    --   This element is automatically unique.
+  one   :: m
+  one = mproduct []
 
-    one   :: m
-    one = mproduct []
+  -- | The sum of a list of elements.
 
-    -- | The sum of a list of elements.
+  mproduct :: [m] -> m
+  mproduct = foldr (.*.) one
 
-    mproduct :: [m] -> m
-    mproduct = foldr (.*.) one
+  -- | /n/-fold multiplication of the same element.
 
-    -- | /n/-fold multiplication of the same element.
-
-    (.^.) :: m -> Integer -> m
-    x .^. n = mproduct (genericReplicate n x)
+  (.^.) :: m -> Integer -> m
+  x .^. n = mproduct (genericReplicate n x)
 
 -- | A type class that provides a single predicate that can be used to check,
 -- whether an element is \"zero\" or not.
@@ -209,17 +230,18 @@ class FindZero a where
 -- @isOne x == True@ @\<===\>@ @x@ is mathematically equal to 'one'
 
 class FindOne m where
-    {-# Minimal isOne | isNotOne #-}
 
-    -- | A predicate that checks, whether an element is an abstract one.
+  {-# Minimal isOne | isNotOne #-}
 
-    isOne :: m -> Bool
-    isOne = not . isNotOne
+  -- | A predicate that checks, whether an element is an abstract one.
 
-    -- | A predicate that checks, whether an element is not an abstract one.
+  isOne :: m -> Bool
+  isOne = not . isNotOne
 
-    isNotOne :: m -> Bool
-    isNotOne = not . isOne
+  -- | A predicate that checks, whether an element is not an abstract one.
+
+  isNotOne :: m -> Bool
+  isNotOne = not . isOne
 
 -- | The semiring type class.
 -- Semirings do not provide any additional functions other than those already provided
@@ -305,18 +327,19 @@ class (Semiring s, FindZero s, FindOne s) => SemiringC s
 --  * @b '.*.' a \<= b ===\> b '.*.' 'star' a \<= b@
 
 class IdempotentSemiring k => KleeneAlgebra k where
-    {-# Minimal star | plus #-}
 
-    -- | The star closure, which is a generalisation of the reflexive-transitive closure of
-    -- relations.
+  {-# Minimal star | plus #-}
 
-    star :: k -> k
-    star x = one .+. plus x
+  -- | The star closure, which is a generalisation of the reflexive-transitive closure of
+  -- relations.
 
-    -- | The Kleene closure, which is generalisation of the transitive closure of relations.
+  star :: k -> k
+  star x = one .+. plus x
 
-    plus :: k -> k
-    plus x = x .*. star x
+  -- | The Kleene closure, which is generalisation of the transitive closure of relations.
+
+  plus :: k -> k
+  plus x = x .*. star x
 
 -- | This is the same as 'star', but with the @-XPostfixOperators@ extension
 --   switched on this allows a postfix usage.
@@ -340,54 +363,55 @@ class (KleeneAlgebra k, FindZero k, FindOne k) => KleeneAlgebraC k
 --   @'neg' x = 'zero' '.-.' x
 
 class MonoidA a => GroupA a where
-    {-# Minimal inverseA | (.-.) #-}
-    
-    -- | The inversion operation that returns the additive inverse of its argument.
 
-    inverseA :: a -> a
-    inverseA = (.-.) zero
+  {-# Minimal inverseA | (.-.) #-}
+  
+  -- | The inversion operation that returns the additive inverse of its argument.
 
-    -- | The subtraction of two values in an additive group.
+  inverseA :: a -> a
+  inverseA = (.-.) zero
 
-    (.-.) :: a -> a -> a
-    x .-. y = x .+. inverseA y
+  -- | The subtraction of two values in an additive group.
+
+  (.-.) :: a -> a -> a
+  x .-. y = x .+. inverseA y
 
 instance GroupA () where
 
-    inverseA  = const ()
-    (.-.) _ _ = ()
+  inverseA  = const ()
+  (.-.) _ _ = ()
 
 instance Num n => GroupA (Number n) where
 
-    inverseA = negate
-    (.-.)    = (-)
+  inverseA = negate
+  (.-.)    = (-)
 
 instance GroupA n => GroupA (ZipList n) where
 
-    inverseA = fmap inverseA
-    (.-.)    = liftA2 (.-.)
+  inverseA = fmap inverseA
+  (.-.)    = liftA2 (.-.)
 
 instance (GroupA n, GroupA n') => GroupA (n, n') where
 
-    inverseA              = inverseA *** inverseA
-    (al, ar) .-. (bl, br) = (al .-. bl, ar .-. br)
+  inverseA              = inverseA *** inverseA
+  (al, ar) .-. (bl, br) = (al .-. bl, ar .-. br)
 
 instance GroupA n => GroupA (x -> n) where
 
-    inverseA = fmap inverseA
-    (.-.)    = liftA2 (.-.)
+  inverseA = fmap inverseA
+  (.-.)    = liftA2 (.-.)
 
 -- | A data type for wrapped numbers similar to the one presented in
 -- <http://hackage.haskell.org/package/weighted-regexp weighted-regexp>.
 
 newtype Number n = Number { number :: n }
-    deriving ( Eq, Ord, Num, Functor )
+  deriving ( Eq, Ord, Num, Functor )
 
 -- | Numbers are shown by removing their wrapper.
 
 instance Show n => Show (Number n) where
 
-    show = show . number
+  show = show . number
 
 -- | This instance declaration is consistent with the previously defined
 -- instance for Show. 
@@ -397,7 +421,7 @@ instance Show n => Show (Number n) where
 
 instance Read n => Read (Number n) where
 
-    readsPrec = map (first Number) <.> readsPrec
+  readsPrec = map (first Number) <.> readsPrec
 
 -- | 
 -- A maybe-like wrapper for numbers introducing a smallest and a largest element.
@@ -405,15 +429,15 @@ instance Read n => Read (Number n) where
 -- (via correct instantiation of Kleene's algorithm).
 
 data Tropical w = Tropical { weight :: w } | Min | Max
-    deriving ( Eq, Functor )
+  deriving ( Eq, Functor )
 
 -- | A trivial instance of show to denote 'Min' and 'Max' separately.
 
 instance Show w => Show (Tropical w) where
 
-    show (Tropical w) = show w
-    show Min        = "Zero."
-    show Max        = "Infinity."
+  show (Tropical w) = show w
+  show Min        = "Zero."
+  show Max        = "Infinity."
 
 -- | 'Max' is larger than any other element, 'Min' is smaller than any other element, 
 -- but the restriction of the order to the objects without these two
@@ -421,13 +445,13 @@ instance Show w => Show (Tropical w) where
 
 instance Ord w => Ord (Tropical w) where
 
-    compare Min Min = EQ
-    compare Min _   = LT
-    compare _   Min = GT
-    compare Max Max = EQ
-    compare Max _   = GT
-    compare _   Max = LT
-    compare w1  w2  = comparing weight w1 w2
+  compare Min Min = EQ
+  compare Min _   = LT
+  compare _   Min = GT
+  compare Max Max = EQ
+  compare Max _   = GT
+  compare _   Max = LT
+  compare w1  w2  = comparing weight w1 w2
 
 -- | Transforms a weight to a number. This is a partial function, because there is
 --   no sensible representation of @Min@ or @Max@ in @Number@s.
@@ -517,273 +541,319 @@ precedence Composition = 6
 
 instance Show a => Show (Regular a) where
 
-    showsPrec _ NoWord         = showString "\x2205"
-    showsPrec _ Empty          = showString "\x03B5"
-    showsPrec _ (Single a)     = shows a
-    showsPrec p (Binary b r s) = showParen (p > p') (showsPrec p' r . shows b . showsPrec p' s)
-                                   where p' = precedence b
-    showsPrec p (Star r)       = showParen (isComposite r) (showsPrec p r) . showString "*"
+  showsPrec _ NoWord         = showString "\x2205"
+  showsPrec _ Empty          = showString "\x03B5"
+  showsPrec _ (Single a)     = shows a
+  showsPrec p (Binary b r s) = showParen (p > p') (showsPrec p' r . shows b . showsPrec p' s)
+                                  where p' = precedence b
+  showsPrec p (Star r)       = showParen (isComposite r) (showsPrec p r) . showString "*"
 
 -- Instance declarations
 
-instance MonoidA () where
-
-    (.+.) _ _ = ()
-    zero      = ()
+instance SemigroupA () where
+  (.+.) _ _ = ()
 
 -- | The disjunction of Boolean values.
 
-instance MonoidA Bool where
-
-    (.+.)      = (||)
-    zero       = False
-    msum       = or
-    mtimes n b = n > 0 && b
+instance SemigroupA Bool where
+  (.+.) = (||)
 
 -- | The additive number operation.
-
-instance Num n => MonoidA (Number n) where
-
-    (.+.) = (+)
-    zero  = 0
+instance Num n => SemigroupA (Number n) where
+  (.+.) = (+)
 
 -- | The Min-Plus instance, where addition is the minimum of two values.
 
-instance Ord t => MonoidA (Tropical t) where
-
-    (.+.) = min
-    zero  = Max
+instance Ord t => SemigroupA (Tropical t) where
+  (.+.) = min
 
 -- | This is only a monoid up to the induced language of a regular expression!
 
-instance MonoidA (Regular r) where
+instance SemigroupA (Regular r) where
+  (.+.) = (.||.)
 
-    (.+.) = (.||.)
-    zero  = noWord
-
--- | 'ZipList's form an additive monoid with the pointwise addition.
+-- | 'ZipList's form an additive semigroup with the pointwise addition.
 -- The same strategy works every other 'Applicative' instance.
 
-instance MonoidA a => MonoidA (ZipList a) where
-
-    (.+.) = liftA2 (.+.)
-    zero  = pure zero
+instance SemigroupA a => SemigroupA (ZipList a) where
+  (.+.) = liftA2 (.+.)
 
 -- | 'First' is a monoid by design and we consider it to be additive.
 
-instance MonoidA (First a) where
-
-    (.+.) = mappend
-    zero  = First Nothing
+instance SemigroupA (First a) where
+  (.+.) = mappend
 
 -- | Direct products of additive monoids are additive monoids as well by
 --   using the respective addition in the respective component.
 
-instance (MonoidA a, MonoidA a') => MonoidA (a, a') where
-
-    (al, ar) .+. (bl, br) = (al .+. bl, ar .+. br)
-    zero                  = (zero, zero)
+instance (SemigroupA a, SemigroupA a') => SemigroupA (a, a') where
+  (al, ar) .+. (bl, br) = (al .+. bl, ar .+. br)
 
 -- | Functions into an additive semigroup form a semigroup as well by defining
 --   addition pointwise, i.e. f .+. g = \x -> f x .+. g x
 
-instance MonoidA a => MonoidA (x -> a) where
+instance SemigroupA a => SemigroupA (x -> a) where
+  (.+.) = liftA2 (.+.)
 
-    (.+.) = liftA2 (.+.)
-    zero  = pure zero
+instance MonoidA () where
+  zero      = ()
+
+instance MonoidA Bool where
+
+  zero       = False
+  msum       = or
+  mtimes n b = n > 0 && b
+
+instance Num n => MonoidA (Number n) where
+  zero  = 0
+
+-- | The Min-Plus instance, where addition is the minimum of two values.
+
+instance Ord t => MonoidA (Tropical t) where
+  zero  = Max
+
+-- | This is only a monoid up to the induced language of a regular expression!
+
+instance MonoidA (Regular r) where
+  zero  = noWord
+
+instance MonoidA a => MonoidA (ZipList a) where
+  zero  = pure zero
+
+instance MonoidA (First a) where
+  zero  = First Nothing
+
+instance (MonoidA a, MonoidA a') => MonoidA (a, a') where
+  zero                  = (zero, zero)
+
+instance MonoidA a => MonoidA (x -> a) where
+  zero  = pure zero
 
 -- | Every element is 'zero'.
 
 instance FindZero () where
 
-    isZero    = const True
-    isNotZero = const False
+  isZero    = const True
+  isNotZero = const False
 
 -- | 'False' is 'zero'.
 
 instance FindZero Bool where
 
-    isZero    = not
-    isNotZero = id
+  isZero    = not
+  isNotZero = id
 
 -- | 'Number 0' is 'zero'.
 
 instance (Eq n, Num n) => FindZero (Number n) where
 
-    isZero    = (0 ==) . number
-    isNotZero = (0 /=) . number
+  isZero    = (0 ==) . number
+  isNotZero = (0 /=) . number
 
 -- | The greatest element is neutral with respect to the minimum operation.
 
 instance FindZero (Tropical t) where
 
-    isZero Max = True
-    isZero _   = False
+  isZero Max = True
+  isZero _   = False
 
 -- | The empty word is the 'zero' element with respect to the induced language.
 
 instance FindZero (Regular r) where
 
-    isZero Empty = True
-    isZero _     = False
+  isZero Empty = True
+  isZero _     = False
 
 -- | The 'zero' element is @'First' 'Nothing'@.
 
 instance FindZero (First a) where
 
-    isZero = isNothing . getFirst
+  isZero = isNothing . getFirst
 
 -- | The 'zero' of pairs is the pair of 'zero'es.
 
 instance (FindZero a, FindZero a') => FindZero (a, a') where
 
-    isZero = uncurry (&&) . (isZero *** isZero)
+  isZero = uncurry (&&) . (isZero *** isZero)
+
+instance SemigroupM () where
+  (.*.) _ _ = ()
+
+-- | The conjunction of Boolean values.
+
+instance SemigroupM Bool where
+  (.*.) = (&&)
+
+-- | The multiplicative number operation.
+
+instance Num n => SemigroupM (Number n) where
+  (.*.) = (*)
+
+-- | The Min-Plus instance in which the multiplication of 'Tropical' values is their additive
+-- semigroup operation.
+
+instance SemigroupA t => SemigroupM (Tropical t) where
+
+  Max .*. _   = Max
+  _   .*. Max = Max
+  Min .*. w   = w
+  w   .*. Min = w
+  w1  .*. w2  = Tropical (weight w1 .+. weight w2)
+
+-- | The composition of regular expressions is a multiplicative semigroup with respect to
+-- the induced language.
+
+instance SemigroupM (Regular r) where
+  (.*.) = (.><.)
+
+-- | 'ZipList's form an multiplicative semigroup with the pointwise multiplication.
+-- The same strategy works every other 'Applicative' instance.
+
+instance SemigroupM a => SemigroupM (ZipList a) where
+  (.*.) = liftA2 (.*.)
+
+-- | List concatenation with the empty list is a multiplicative semigroup.
+
+instance SemigroupM [a] where
+  (.*.)    = (++)
+
+-- | 'First' is an 'Applicative' instance and thus the implementation is the same as for 'ZipList'.
+
+instance SemigroupM m => SemigroupM (First m) where
+  (.*.) = liftA2 (.*.)
+
+-- | Usual product construction.
+
+instance (SemigroupM m, SemigroupM m') => SemigroupM (m, m') where
+  (ml, mr) .*. (nl, nr) = (ml .*. nl, mr .*. nr)
+
+-- | Functions into an multiplicative semigroup form a semigroup as well by defining
+--   multiplication pointwise, i.e. f .*. g = \x -> f x .*. g x.
+
+instance SemigroupM m => SemigroupM (x -> m) where
+  (.*.) = liftA2 (.*.)
 
 instance MonoidM () where
-
-    (.*.) _ _ = ()
-    one       = ()
+  one       = ()
 
 -- | The conjunction of Boolean values.
 
 instance MonoidM Bool where
 
-    (.*.)    = (&&)
-    one      = True
-    mproduct = and
-    b .^. n  = n <= 0 || b
+  one      = True
+  mproduct = and
+  b .^. n  = n <= 0 || b
 
 -- | The multiplicative number operation.
 
 instance Num n => MonoidM (Number n) where
-
-    (.*.) = (*)
-    one   = 1
+  one   = 1
 
 -- | The Min-Plus instance in which the multiplication of 'Tropical' values is their additive,
 -- monoidal operation.
 
 instance MonoidA t => MonoidM (Tropical t) where
-
-    Max .*. _   = Max
-    _   .*. Max = Max
-    Min .*. w   = w
-    w   .*. Min = w
-    w1  .*. w2  = Tropical (weight w1 .+. weight w2)
-
-    one = Min
+  one = Min
 
 -- | The composition of regular expressions is a multiplicative monoid with respect to
 -- the induced language.
 
 instance MonoidM (Regular r) where
-
-    (.*.) = (.><.)
-    one   = emptyWord
+  one   = emptyWord
 
 -- | 'ZipList's form an multiplicative monoid with the pointwise multiplication.
 -- The same strategy works every other 'Applicative' instance.
 
 instance MonoidM a => MonoidM (ZipList a) where
-
-    (.*.) = liftA2 (.*.)
-    one   = pure one
+  one   = pure one
 
 -- | List concatenation with the empty list is a multiplicative monoid.
 
 instance MonoidM [a] where
-
-    (.*.)    = (++)
-    one      = []
-    mproduct = concat
+  one      = []
+  mproduct = concat
 
 -- | In base-4.7.0.1 these two instances are not present automatically.
 
 instance Functor First where
 
-    fmap f = First . fmap f . getFirst
+  fmap f = First . fmap f . getFirst
 
 instance Applicative First where
 
-    pure                = First . pure
-    First f <*> First x = First (f <*> x)
+  pure                = First . pure
+  First f <*> First x = First (f <*> x)
 
 -- | 'First' is an 'Applicative' instance and thus the implementation is the same as for 'ZipList'.
 
 instance MonoidM m => MonoidM (First m) where
-
-    (.*.) = liftA2 (.*.)
-    one   = pure one
+  one   = pure one
 
 -- | Usual product construction.
 
 instance (MonoidM m, MonoidM m') => MonoidM (m, m') where
-
-    (ml, mr) .*. (nl, nr) = (ml .*. nl, mr .*. nr)
-    one                   = (one, one)
+  one                   = (one, one)
 
 -- | Functions into an multiplicative semigroup form a semigroup as well by defining
 --   multiplication pointwise, i.e. f .*. g = \x -> f x .*. g x.
 
 instance MonoidM m => MonoidM (x -> m) where
-
-    (.*.) = liftA2 (.*.)
-    one   = pure one
+  one   = pure one
 
 -- | Every element is a multiplicative unit.
 
 instance FindOne () where
 
-    isOne    = const True
-    isNotOne = const False
+  isOne    = const True
+  isNotOne = const False
 
 -- | The value 'True' is a multiplicative unit for @('&&')@.
 
 instance FindOne Bool where
 
-    isOne    = id
-    isNotOne = not
+  isOne    = id
+  isNotOne = not
 
 -- | The value 'Number 1' is a multiplicative unit.
 
 instance (Num n, Eq n) => FindOne (Number n) where
 
-    isOne (Number 1) = True
-    isOne _          = False
+  isOne (Number 1) = True
+  isOne _          = False
 
 -- | The multiplicative unit with respect to the tropical multiplication is 'Min'.
 
 instance FindOne (Tropical t) where
 
-    isOne Min = True
-    isOne _   = False
+  isOne Min = True
+  isOne _   = False
 
 -- | The empty word is a neutral element for the composition of regular expressions with
 -- respect to the induced language.
 
 instance FindOne (Regular r) where
 
-    isOne Empty = True
-    isOne _     = False
+  isOne Empty = True
+  isOne _     = False
 
 -- | The multiplicative unit of list concatenation is the empty list.
 
 instance FindOne [a] where
 
-    isOne = null
+  isOne = null
 
 -- | The multiplicative unit of the doubly listed monoid operation is the doubly lifted unit.
 
 instance FindOne a => FindOne (First a) where
 
-    isOne (First (Just x)) = isOne x
-    isOne _                = False
+  isOne (First (Just x)) = isOne x
+  isOne _                = False
 
 -- | The multiplicative unit of pairs is the pair of multiplicative units.
 
 instance (FindOne a, FindOne b) => FindOne (a, b) where
 
-    isOne = uncurry (&&) . (isOne *** isOne)
+  isOne = uncurry (&&) . (isOne *** isOne)
 
 -- | The trivial semiring.
 
@@ -846,8 +916,8 @@ instance IdempotentSemiring s => IdempotentSemiring (x -> s)
 
 instance KleeneAlgebra () where
 
-    star = id
-    plus = id
+  star = id
+  plus = id
 
 -- | The Boolean Kleene algebra.
 -- By definition @b '.^.' 0 = 'one' = True@ and since @('.+.') = (||)@ we get that
@@ -855,8 +925,8 @@ instance KleeneAlgebra () where
 
 instance KleeneAlgebra Bool where
 
-    star = const one
-    plus = id
+  star = const one
+  plus = id
 
 -- | The tropical Kleene algebra.
 -- By definition we have: @ w '.^.' 0 = 'one' = 'Min'@ and @w '.^.' n@ is
@@ -867,32 +937,32 @@ instance KleeneAlgebra Bool where
 
 instance (Ord t, MonoidA t) => KleeneAlgebra (Tropical t) where
 
-    star = const one
-    plus = id
+  star = const one
+  plus = id
 
 -- | This is only true with respect to the induced language.
 
 instance KleeneAlgebra (Regular r) where
 
-    star = repetition
+  star = repetition
 
 -- | Star closure and Kleene closure is carried out pointwise.
 -- This is possible for all 'Applicative' instances.
 
 instance KleeneAlgebra k => KleeneAlgebra (ZipList k) where
 
-    star = fmap star
-    plus = fmap plus
+  star = fmap star
+  plus = fmap plus
 
 instance (KleeneAlgebra k, KleeneAlgebra k') => KleeneAlgebra (k, k') where
 
-    star = star *** star
-    plus = plus *** plus
+  star = star *** star
+  plus = plus *** plus
 
 instance KleeneAlgebra k => KleeneAlgebra (x -> k) where
 
-    star = fmap star
-    plus = fmap plus
+  star = fmap star
+  plus = fmap plus
 
 instance KleeneAlgebraC ()
 instance KleeneAlgebraC Bool
