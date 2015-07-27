@@ -29,10 +29,10 @@ module Algebraic.Vector (
 
   -- * Algebraic functions
 
-  (.+++.),
-  (.++.),
-  (.---.),
-  (.--.),
+  (<+++>),
+  (<++>),
+  (<--->),
+  (<-->),
   additiveInverse,
   (*>>),
   (*>),
@@ -64,29 +64,29 @@ removeZeroes = ffilter isNotZero
 
 -- | The component-wise sum of two vectors. The result may contain zeroes.
 
-infixr 4 .+++.
+infixr 4 <+++>
 
-(.+++.) :: (UnionableHom vec, MonoidA a) => vec a -> vec a -> vec a
-(.+++.) = unionWith (.+.)
+(<+++>) :: (UnionableHom vec, MonoidA a) => vec a -> vec a -> vec a
+(<+++>) = unionWith (.+.)
 
 -- | The component-wise sum of two vectors followed by a removal of all zeroes.
 
-infixr 4 .++.
+infixr 4 <++>
 
-(.++.) :: (KeyMaybeFunctor vec, UnionableHom vec, MonoidA a, FindZero a) => vec a -> vec a -> vec a
-(.++.) = removeZeroes <.> (.+++.)
+(<++>) :: (KeyMaybeFunctor vec, UnionableHom vec, MonoidA a, FindZero a) => vec a -> vec a -> vec a
+(<++>) = removeZeroes <.> (<+++>)
 
 -- | The component-wise subtraction of two vectors.
 -- The result may contain zeroes.
 
-(.---.) :: (UnionableHom vec, Functor vec, GroupA ag) => vec ag -> vec ag -> vec ag
-x .---. y = x .+++. additiveInverse y
+(<--->) :: (UnionableHom vec, Functor vec, GroupA ag) => vec ag -> vec ag -> vec ag
+x <---> y = x <+++> additiveInverse y
 
 -- | The component-wise subtraction of two vectors followed by a removal of all zeroes.
 
-(.--.) :: (KeyMaybeFunctor vec, UnionableHom vec, GroupA ag, FindZero ag) => 
+(<-->) :: (KeyMaybeFunctor vec, UnionableHom vec, GroupA ag, FindZero ag) => 
   vec ag -> vec ag -> vec ag
-(.--.) = removeZeroes <.> (.---.)
+(<-->) = removeZeroes <.> (<--->)
 
 -- | The additive inverse of a vector.
 -- If the input vector contains zeroes,
