@@ -72,6 +72,7 @@ module Auxiliary.General (
     Key,
     Arc,
     Row,
+    Mat,
 
     -- * 'Arbitrary' helper function
     
@@ -372,6 +373,11 @@ type Arc a = (Key, a)
 -- | A row is simply an association list.
 
 type Row a = [Arc a]
+
+-- | A matrix is a row of rows.
+-- This type has no additional constraints and may not be suited for efficient operations.
+
+type Mat a = Row (Row a)
 
 -- | This 'Arbitrary' generator creates an arbitrary 'Row',
 -- such that its indices are in the range @[0 .. n]@ for some natural number /n/.
