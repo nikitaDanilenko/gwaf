@@ -40,7 +40,8 @@ import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, 
 import Auxiliary.Mapping            ( Mapping, toRow, fromRow, MappingV, empty, insertWith, delete )
 import Auxiliary.SetOps             ( Unionable, unionWith, Intersectable, intersectionWithKey,
                                       intersectionWith, Complementable, differenceWith,
-                                      differenceWith2, SetOps, symDifference )
+                                      differenceWith2, SetOps, symDifference,
+                                      UnionableHom, IntersectableHom, ComplementableHom, SetOpsHom )
 
 -- | A wrapper around a 'Row'.
 
@@ -118,11 +119,15 @@ instance Intersectable AList AList where
     intersectionWithKey op = mapInner . intersectionByWith compareFirsts (fmap . uncurry op) . asList
     intersectionWith op    = mapInner . intersectionByFstWith op . asList
 
+instance IntersectableHom AList
+
 -- | Union operations have a structural complexity /O/(@'size' left@ + @'size' right@).
 
 instance Unionable AList AList where
 
     unionWith op   = mapInner . unionByFstWith op . asList
+
+instance UnionableHom AList
 
 -- | Difference operations have a structural complexity /O/(@'size' left@ + @'size' right@).
 
@@ -131,11 +136,15 @@ instance Complementable AList AList where
     differenceWith op = mapInner . differenceByFstWith op . asList
     differenceWith2   = differenceWith
 
+instance ComplementableHom AList
+
 -- | All set operations have a structural complexity of /O/(@'size' left@ + @'size' right@).
 
 instance SetOps AList AList where
 
     symDifference = mapInner . symmetricDifferenceByFst . asList
+
+instance SetOpsHom AList
 
 instance Arbitrary a => Arbitrary (AList a) where
 
