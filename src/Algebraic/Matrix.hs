@@ -320,9 +320,19 @@ liftVecMatMult (.*) a b = rowMap (.* b) a
   Matrix t vec asg -> Matrix i vec asg -> Matrix i vec asg
 (.++.) = removeZeroesMatrix <.> (.+++.)
 
+-- | Computes the additive inverse of a matrix.
+-- This is essentially the same definition as for structures over additive groups,
+-- however, since the set of all matrices (of arbitrary sizes!) does not have a neutral
+-- element with respect to addition,
+-- we provide this function manually.
+
 inverseAMat :: (Functor o, KeyMaybeFunctor i, GroupA ag, FindZero ag) => 
   Matrix o i ag -> Matrix o i ag
-inverseAMat = removeZeroesMatrix . fmap inverseA
+inverseAMat = fmap inverseA
+
+-- | Computes the difference of two matrices.
+-- Just as with 'inverseAMat' this is the same definition as in the case of additive groups,
+-- without a group instance for matrices.
 
 (.--.) :: (Functor i, KeyMaybeFunctor vec, Unionable t i, 
            Unionable vec vec, GroupA asg, FindZero asg)
@@ -381,15 +391,16 @@ instance (Complementable tOuter quOuter, Complementable tInner quInner)
 instance (SetOps tOuter quOuter, SetOps tquInner tquInner) 
   => SetOps (Matrix tOuter tquInner) (Matrix quOuter tquInner)
 
--- | An additive monoid instance for matrices over additive monoids.
--- The addition is the component-wise addition and the zero matrix is a matrix whose
--- rows are empty.
--- Note that the type level natural @rs@ provides the proper size.
+-- | The additive semigroup instance for matrices over additive semigroups.
+-- The addition is the component-wise addition.
 
 instance (UnionableHom o, Mapping o, UnionableHom i, Mapping i, SemigroupA asg) 
   => SemigroupA (Matrix o i asg) where
     
   (.+.) = (.+++.)
+
+-- | The multiplicative semigroup instance for matrices over semigroups.
+-- The multiplication is the usual matrix multiplication.
 
 instance (Mapping o, HasVMM i o, Semiring s) => SemigroupM (Matrix o i s) where
   
