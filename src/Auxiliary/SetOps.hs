@@ -280,7 +280,7 @@ dif = difWith (\_ _ -> Nothing)
 -- they should be satisfied in homogeneous cases, but are often not possible to express in
 -- the more general case of heterogeneous set operations.
 
-class (Intersectable r v, Unionable r v, Complementable r v) => SetOps r v where
+class (Intersectable t qu, Unionable t qu, Complementable t qu) => SetOps t qu where
 
-    symDifference :: r a -> v a -> v a
+    symDifference :: t a -> qu a -> qu a
     symDifference r c = (r \\/ c) \\\ (r //\ c)
