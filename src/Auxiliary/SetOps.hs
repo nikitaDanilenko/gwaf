@@ -156,7 +156,6 @@ capLeft = capWith const
 -- The nomenclature is a mnemonic for the fact that the first argument is __t__raversed
 -- and the second argument is __i__nserted into.
 
-
 class Unionable t i where
     {-# Minimal unionWith #-}
 
