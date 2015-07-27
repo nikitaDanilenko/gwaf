@@ -61,7 +61,7 @@ module Algebraic.Semiring (
     isComposite,
     noWord,
     emptyWord,
-    (.++.),
+    (.><.),
     (.||.),
     repetition
     
@@ -460,9 +460,9 @@ single = Single
 
 -- | Composition of two regular expressions.
 
-infixr 6 .++.
-(.++.) :: Regular a -> Regular a -> Regular a
-(.++.) = Binary Composition
+infixr 6 .><.
+(.><.) :: Regular a -> Regular a -> Regular a
+(.><.) = Binary Composition
 
 -- | Alternative of two regular expressions.
 
@@ -658,7 +658,7 @@ instance MonoidA t => MonoidM (Tropical t) where
 
 instance MonoidM (Regular r) where
 
-    (.*.) = (.++.)
+    (.*.) = (.><.)
     one   = emptyWord
 
 -- | 'ZipList's form an multiplicative monoid with the pointwise multiplication.
