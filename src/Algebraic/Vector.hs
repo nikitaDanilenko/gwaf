@@ -42,8 +42,9 @@ module Algebraic.Vector (
   ) where
 
 
-import Algebraic.Semiring     ( MonoidA, (.+.), zero, MonoidM, (.*.), one, GroupA, inverseA,
-                                FindZero, isZero, isNotZero, FindOne, isOne, Semiring )
+import Algebraic.Semiring     ( SemigroupA, MonoidA, (.+.), zero, SemigroupM, MonoidM, (.*.), one,
+                                GroupA, inverseA, FindZero, isZero, isNotZero, FindOne, isOne,
+                                Semiring )
 import Auxiliary.General      ( Key, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses ( Lookup, maybeAt, KeyMaybeFunctor, ffilter )
 import Auxiliary.Mapping      ( Mapping, singleton, MappingV, empty )
@@ -66,7 +67,7 @@ removeZeroes = ffilter isNotZero
 
 infixr 4 <+++>
 
-(<+++>) :: (UnionableHom vec, MonoidA a) => vec a -> vec a -> vec a
+(<+++>) :: (UnionableHom vec, SemigroupA asg) => vec asg -> vec asg -> vec asg
 (<+++>) = unionWith (.+.)
 
 -- | The component-wise sum of two vectors followed by a removal of all zeroes.
@@ -100,7 +101,7 @@ additiveInverse = fmap inverseA
 
 infixl 5 *>>
 
-(*>>) :: (Mapping vec, MonoidM mm) => mm -> vec mm -> vec mm
+(*>>) :: (Mapping vec, SemigroupM msg) => msg -> vec msg -> vec msg
 (*>>) = scaleLeft (.*.)
 
 -- | Optimised scalar multiplication of a vector with a scalar.
