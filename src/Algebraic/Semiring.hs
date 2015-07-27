@@ -88,6 +88,16 @@ import Auxiliary.General   ( (<.>) )
 -- 
 -- [/neutrality/]
 --    @a '.+.' 'zero' = a = 'zero' '.+.' a@
+-- 
+-- The additional functions have sensible default definitions that can be overwritten for
+-- efficiency.
+-- These functions are required to satisfy the following laws:
+-- 
+-- [/msum/]
+--    @'msum' = 'foldr' ('.+.') 'zero'@
+-- 
+-- [/mtimes/]
+--    @'mtimes' n x = 'msum' ('genericReplicate' n x)@
 
 class MonoidA a where
     {-# Minimal (.+.), zero | msum #-}
@@ -127,6 +137,16 @@ class MonoidA a where
 --  
 -- [/neutrality/]
 --    @a '.*.' 'one' = a = 'one' '.*.' a@
+-- 
+-- The additional functions have sensible default definitions that can be overwritten for
+-- efficiency.
+-- These functions are required to satisfy the following laws:
+-- 
+-- [/mproduct/]
+--    @'product' = 'foldr' ('.*.') 'one'@
+-- 
+-- [/power/]
+--    @x '.^.' y = 'mproduct' ('genericReplicate' n x)@
 
 class MonoidM m where
     {-# Minimal one, (.*.) | mproduct #-}
