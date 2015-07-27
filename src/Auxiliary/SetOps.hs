@@ -30,31 +30,35 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Auxiliary.SetOps (
-    
-    -- * Heterogeneous intersections
-    
-    Intersectable ( .. ),
-    capWithKey,
-    capWith,
-    capLeft,
+  
+  -- * Heterogeneous intersections
+  
+  Intersectable ( .. ),
+  capWithKey,
+  capWith,
+  capLeft,
+  IntersectableHom,
 
-    -- * Heterogeneous unions
+  -- * Heterogeneous unions
 
-    Unionable ( .. ),
-    bigunionWith,
-    bigunionLeft,
+  Unionable ( .. ),
+  bigunionWith,
+  bigunionLeft,
+  UnionableHom,
 
-    -- * Heterogeneous differences
+  -- * Heterogeneous differences
 
-    Complementable ( .. ),
-    difWith,
-    dif,
-    
-    -- * Heterogeneous set operations
+  Complementable ( .. ),
+  difWith,
+  dif,
+  ComplementableHom,
+  
+  -- * Heterogeneous set operations
 
-    SetOps ( .. )
+  SetOps ( .. ),
+  SetOpsHom
 
-    ) where
+  ) where
 
 import Data.Foldable                    ( Foldable )
 import qualified Data.Foldable as F     ( foldr )
@@ -108,6 +112,10 @@ class Intersectable t q where
     infixr 6 /\\
     (/\\) :: t a -> q b -> t b
     (/\\) = intersectionWith (flip const)
+
+-- | A short-hand type class for the special case of homogeneous intersections.
+
+class Intersectable tq tq => IntersectableHom tq
 
 -- | The strategy of traversing one structure while querying another can be expressed in terms
 -- of the type classes 'Lookup' and 'KeyMaybeFunctor'.
@@ -182,6 +190,10 @@ class Unionable t i where
     (\//) :: t a -> i a -> i a
     (\//) = unionWith (flip const)
 
+-- | A short-hand type class for the special case of homogeneous unions.
+
+class Unionable ti ti => UnionableHom ti
+
 -- | Fold 'unionWith' over a structure.
 -- Note that this there is no default empty value for the structure in which the values
 -- are inserted,
@@ -247,6 +259,10 @@ class Complementable t qu where
     (\\\) :: qu a -> t b -> qu a
     (\\\) = differenceWith2 (\_ _ -> Nothing)
 
+-- | A short-hand type class for the special case of homogeneous differences.
+
+class Complementable tqu tqu => ComplementableHom tqu
+
 -- | The abstraction of traversing one structure while querying another is possible in terms
 -- of 'Lookup' and 'KeyMaybeFunctor'.
 -- This function is an implementation of the strategy intended for 'differenceWith'
@@ -284,3 +300,8 @@ class (Intersectable t qu, Unionable t qu, Complementable t qu) => SetOps t qu w
 
     symDifference :: t a -> qu a -> qu a
     symDifference r c = (r \\/ c) \\\ (r //\ c)
+
+
+-- | A short-hand type class for the special case of homogeneous set operations.
+
+class SetOps tqu tqu => SetOpsHom tqu
