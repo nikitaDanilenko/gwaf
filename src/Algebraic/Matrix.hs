@@ -294,36 +294,40 @@ liftVecMatMult (.*) a b = rowMap (.* b) a
 -- (i.e. 'HasVMM'),
 -- this function can be used to provide a multiplicative semigroup instance for matrices.
 
-(.**.) :: (Functor o, HasHetVMM vec1 q vec2 vec3, Semiring s) =>
+(.***.) :: (Functor o, HasHetVMM vec1 q vec2 vec3, Semiring s) =>
   Matrix o vec1 s -> Matrix q vec2 s -> Matrix o vec3 s
-(.**.) = liftVecMatMult (.*)
+(.***.) = liftVecMatMult (.*)
 
--- | Similar to @('.**.')@, but also removes zeroes and uses an optimised scalar multiplication.
+-- | Similar to @('.***.')@, but also removes zeroes and uses an optimised scalar multiplication.
 
-(.***.) :: (Functor o, HasHetVMM vec1 q vec2 vec3, MappingV vec2, Semiring s, FindZero s, FindOne s)
+(.**.) :: (Functor o, HasHetVMM vec1 q vec2 vec3, MappingV vec2, Semiring s, FindZero s, FindOne s)
   =>  Matrix o vec1 s -> Matrix q vec2 s -> Matrix o vec3 s
-(.***.) = liftVecMatMult (.**)
+(.**.) = liftVecMatMult (.**)
 
 -- | A fully parametric matrix addition.
 -- In the particular case of a homogeneous setting
 -- this function can be used to provide an additive semigroup instance for matrices.
 -- However, this function is more general than the special case.
 
-(.++.) :: (Unionable t i, Unionable vec vec, SemigroupA asg) =>
+(.+++.) :: (Unionable t i, Unionable vec vec, SemigroupA asg) =>
   Matrix t vec asg -> Matrix i vec asg -> Matrix i vec asg
-(.++.) = unionWith (.+.)
+(.+++.) = unionWith (.+.)
 
--- | This is just @('.++.')@ followed by a removal of all zeroes.
+-- | This is just @('.+++.')@ followed by a removal of all zeroes.
 
-(.+++.) :: (Functor i, Unionable t i, KeyMaybeFunctor vec, 
+(.++.) :: (Functor i, Unionable t i, KeyMaybeFunctor vec, 
             Unionable vec vec, SemigroupA asg, FindZero asg) =>
   Matrix t vec asg -> Matrix i vec asg -> Matrix i vec asg
-(.+++.) = removeZeroesMatrix <.> (.++.)
+(.++.) = removeZeroesMatrix <.> (.+++.)
 
-inverseAMat :: (Functor o, Functor i, GroupA ag) => Matrix o i ag -> Matrix o i ag
-inverseAMat = fmap inverseA
+inverseAMat :: (Functor o, KeyMaybeFunctor i, GroupA ag, FindZero ag) => 
+  Matrix o i ag -> Matrix o i ag
+inverseAMat = removeZeroesMatrix . fmap inverseA
 
--- (.--.) :: (Unionable t i, Unionable vec vec, SemigroupA asg) => 
+(.--.) :: (Functor i, KeyMaybeFunctor vec, Unionable t i, 
+           Unionable vec vec, GroupA asg, FindZero asg)
+  => Matrix t vec asg -> Matrix i vec asg -> Matrix i vec asg
+a .--. b = a .++. inverseAMat b
 
 -- | Creates a scalar multiplication from a combination function.
 -- The combination function takes the \"outer\" key of the value the mapping is scaled with
@@ -385,15 +389,8 @@ instance (SetOps tOuter quOuter, SetOps tquInner tquInner)
 instance (UnionableHom o, Mapping o, UnionableHom i, Mapping i, SemigroupA asg) 
   => SemigroupA (Matrix o i asg) where
     
-  (.+.) = (.++.)
-{-
-instance (UnionableHom o, Mapping o, UnionableHom i, Mapping i, GroupA ga, FindZero ga)
-  => GroupA (Matrix o i ga) where
+  (.+.) = (.+++.)
 
-  inverseA = filterMatrix isNotZero . fmap inverseA
-  a .-. b  = filterMatrix isNotZero (a .+. inverseA b)-}
-
-instance (Mapping o, HasVMM i o, Semiring s)
-  => SemigroupM (Matrix o i s) where
+instance (Mapping o, HasVMM i o, Semiring s) => SemigroupM (Matrix o i s) where
   
-  (.*.) = (.**.)
+  (.*.) = (.***.)
