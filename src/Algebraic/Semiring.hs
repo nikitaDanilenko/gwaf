@@ -41,6 +41,8 @@ module Algebraic.Semiring (
 
     Semiring,
     SemiringC,
+    IdempotentSemiring,
+    (.<=.),
 
     -- * Kleene algebras with an additional type class for checking constants
 
