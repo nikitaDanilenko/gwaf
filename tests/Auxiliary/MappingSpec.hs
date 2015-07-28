@@ -20,7 +20,7 @@ import Test.QuickCheck           ( Arbitrary, property )
 
 import Auxiliary.AList           ( AList )
 import Auxiliary.General         ( Key )
-import Auxiliary.Helpers         ( (.<->.), LabProperties, Proxy ( Proxy ), mkSuite )
+import Auxiliary.Helpers         ( LabProperties, Proxy ( Proxy ), mkSuite )
 import Auxiliary.KeyedClasses    ( clookup )
 import Auxiliary.IntMapArbitrary ()
 import Auxiliary.Mapping         ( Mapping, fromRow, toRow, keys, values, size,
@@ -62,7 +62,7 @@ propsMapping _ = zip lawsMapping
 -- | Tests the law that 'isEmpty' returns 'True' if and only if the mapping is equal to 'empty'.
 
 prop_emptyMapping :: (MappingV m, Eq (m a)) => m a -> Bool
-prop_emptyMapping m = isEmpty m .<->. (m == empty)
+prop_emptyMapping m = isEmpty m == (m == empty)
 
 -- | Tests the law @'insert' = 'insertWith' 'const'@.
 
