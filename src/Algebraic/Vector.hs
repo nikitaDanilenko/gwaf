@@ -43,8 +43,7 @@ module Algebraic.Vector (
 
 
 import Algebraic.Semiring     ( SemigroupA, MonoidA, (.+.), zero, SemigroupM, MonoidM, (.*.), one,
-                                GroupA, inverseA, FindZero, isZero, isNotZero, FindOne, isOne,
-                                Semiring )
+                                GroupA, inverseA, FindZero, isZero, isNotZero, FindOne, isOne )
 import Auxiliary.General      ( Key, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses ( Lookup, maybeAt, KeyMaybeFunctor, ffilter )
 import Auxiliary.Mapping      ( Mapping, singleton, MappingV, empty )
