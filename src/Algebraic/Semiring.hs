@@ -75,6 +75,7 @@ import Data.List           ( genericReplicate )
 import Data.Maybe          ( isNothing )
 import Data.Monoid         ( First ( .. ), mappend )
 import Data.Ord            ( comparing )
+import Test.QuickCheck     ( Arbitrary, arbitrary, frequency, suchThat )
 
 import Auxiliary.General   ( (<.>) )
 
@@ -347,7 +348,6 @@ class IdempotentSemiring k => KleeneAlgebra k where
 (^*) :: KleeneAlgebra k => k -> k
 (^*) = star
 
-
 -- | A type class for Kleene algebras in which the constants can be distinguished from other
 -- elements.
 -- Its behaviour is very similar to the one discussed for 'SemiringC'.
@@ -423,6 +423,12 @@ instance Read n => Read (Number n) where
 
   readsPrec = map (first Number) <.> readsPrec
 
+-- | An 'Arbitrary' instance that simply lifts the underlying instance to the 'Number' level.
+
+instance Arbitrary n => Arbitrary (Number n) where
+
+  arbitrary = fmap Number arbitrary
+
 -- | 
 -- A maybe-like wrapper for numbers introducing a smallest and a largest element.
 -- This data type is used in Dijkstra's algorithm
@@ -452,6 +458,15 @@ instance Ord w => Ord (Tropical w) where
   compare Max _   = GT
   compare _   Max = LT
   compare w1  w2  = comparing weight w1 w2
+
+-- | An 'Arbitrary' instance that rarely chooses the extremes and usually provides the
+-- intermediate cases.
+
+instance (Num w, Ord w, Arbitrary w) => Arbitrary (Tropical w) where
+
+  arbitrary = frequency [(1, return Min), 
+                         (1, return Max), 
+                         (40, fmap Tropical (arbitrary `suchThat` (> 0)))]
 
 -- | Transforms a weight to a number. This is a partial function, because there is
 --   no sensible representation of @Min@ or @Max@ in @Number@s.
@@ -548,6 +563,20 @@ instance Show a => Show (Regular a) where
                                   where p' = precedence b
   showsPrec p (Star r)       = showParen (isComposite r) (showsPrec p r) . showString "*"
 
+-- | This instance chooses single letters with a high probability, followed by binary operations,
+-- star closure, the empty word and no word.
+
+instance Arbitrary a => Arbitrary (Regular a) where
+
+  arbitrary = frequency [
+                         (1, return noWord),
+                         (2, return emptyWord),
+                         (10, fmap single arbitrary),
+                         (4, fmap (uncurry (.||.)) arbitrary),
+                         (4, fmap (uncurry (.><.)) arbitrary),
+                         (3,  fmap repetition arbitrary)
+                          ]
+
 -- Instance declarations
 
 instance SemigroupA () where
@@ -596,7 +625,7 @@ instance SemigroupA a => SemigroupA (x -> a) where
   (.+.) = liftA2 (.+.)
 
 instance MonoidA () where
-  zero      = ()
+  zero = ()
 
 instance MonoidA Bool where
 
