@@ -36,10 +36,11 @@ import Data.Maybe                       ( isNothing )
 
 import Auxiliary.KeyedClasses           ( Lookup ( clookup ) )
 import Auxiliary.AList                  ( AList, asList )
-import Auxiliary.SetOps                 ( Intersectable ( intersectionWithKey ), 
-                                          Unionable ( unionWith ), 
+import Auxiliary.SetOps                 ( Intersectable ( intersectionWithKey ), IntersectableHom,
+                                          Unionable ( unionWith ), UnionableHom,
                                           Complementable ( differenceWith, differenceWith2 ),
-                                          SetOps ( symDifference ), capWithKey, difWith )
+                                          ComplementableHom, SetOps ( symDifference ), capWithKey,
+                                          difWith, SetOpsHom )
 import Auxiliary.SafeArray              ( SafeArray )
 
 -- | Intersection with a complexity of /O/((@'size' left@) * log(@'size' right@)).
@@ -53,6 +54,8 @@ instance Intersectable AList IntMap where
 instance Intersectable IntMap IntMap where
 
     intersectionWithKey = IM.intersectionWithKey
+
+instance IntersectableHom IntMap
 
 -- | Intersection with a complexity of /O/(@'size' left@).
 
@@ -78,6 +81,8 @@ instance Unionable IntMap IntMap where
 
     unionWith        = IM.unionWith
 
+instance UnionableHom IntMap
+
 -- | Relative complement with a complexity of /O/((@'size' al@) * log(@'size' im@)),
 -- where @al@ is the 'AList' and @im@ is the 'IntMap'.
 
@@ -93,6 +98,8 @@ instance Complementable IntMap IntMap where
     differenceWith    = IM.differenceWith
     differenceWith2   = differenceWith
 
+instance ComplementableHom IntMap
+
 -- | All set operations have a complexity of /O/((@'size' al@) * log(@'size' im@)),
 -- where @al@ is the 'AList' and @im@ is the 'IntMap'.
 
@@ -105,3 +112,5 @@ instance SetOps AList IntMap where
 -- | All set operations have a complexity of /O/(@'size' left@ + @'size' right@).
 
 instance SetOps IntMap IntMap
+
+instance SetOpsHom IntMap
