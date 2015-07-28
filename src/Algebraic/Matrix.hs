@@ -63,15 +63,16 @@ import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( all )
 import Data.IntMap                  ( IntMap )
 import Data.List                    ( intercalate, genericReplicate )
+import Test.QuickCheck              ( Arbitrary, arbitrary, shrink, sized )
 
 import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero, GroupA, inverseA,
                                       (.-.), MonoidM, (.*.), one, Semiring, FindOne, SemigroupA,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
-import Auxiliary.AList              ( AList )
+import Auxiliary.AList              ( AList, asList )
 import Auxiliary.General            ( Key, Arc, Mat, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
-                                      ffilter )
+                                      ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
@@ -405,3 +406,19 @@ instance (UnionableHom o, Mapping o, UnionableHom i, Mapping i, SemigroupA asg)
 instance (Mapping o, HasVMM i o, Semiring s) => SemigroupM (Matrix o i s) where
   
   (.*.) = (.***.)
+
+-- | This instance generates only square matrices.
+-- Since matrices are used to represent graphs,
+-- it is a sensible choice.
+-- The 'shrink' function yields all submatrices of smaller sizes.
+
+instance (Mapping o, Mapping i, Arbitrary a) => Arbitrary (Matrix o i a) where
+
+  arbitrary = sized fun where
+    fun n = fmap (fromMat . zip ks) 
+                 (mapM (fmap (asList . restrictKeys n) . const arbitrary) ks)
+      where ks = [0 .. n - 1]
+
+  shrink m = map (\k -> Matrix (fmap (restrictKeys k) (restrictKeys k rs))) (rowNumbers m)
+    where rs = matrix m
+    
