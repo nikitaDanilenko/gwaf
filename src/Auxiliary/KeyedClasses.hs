@@ -28,6 +28,8 @@ module Auxiliary.KeyedClasses (
 
     KeyMaybeFunctor ( .. ),
 
+    restrictKeys,
+
     -- * Structures with @lookup@
 
     Lookup ( .. ),
@@ -197,6 +199,11 @@ class KeyFunctor f => KeyMaybeFunctor f where
 
     ffilter :: (a -> Bool) -> f a -> f a
     ffilter = ffilterWithKey . const
+
+-- | Keeps only those keys in the structure that are strictly smaller than a given key.
+
+restrictKeys :: KeyMaybeFunctor f => Key -> f a -> f a
+restrictKeys n = ffilterWithKey (\k _ -> k < n)
 
 -- | The 'IntMap' structure provides functions with the desired properties and near-identical
 --   names (except for the @f@ in the beginning). These functions are mapped one-to-one to their
