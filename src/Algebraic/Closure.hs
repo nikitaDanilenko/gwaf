@@ -14,6 +14,16 @@
 
 module Algebraic.Closure (
 
+  kleeneClosureWith,
+  kleeneClosure,
+  kleeneClosureC,
+
+  starClosureI,
+  starClosureO,
+  starClosureIC,
+  starClosureOC,
+
+  addIdentity
   ) where
 
 import Control.Applicative ( (<*>) )
