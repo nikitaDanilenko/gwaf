@@ -50,12 +50,17 @@ module Algebraic.Matrix (
 
   vecMatMult,
   liftVecMatMult,
-  (.**.),
---   (.++.),
   smultWithKeys,
   smultWithKey,
   HasHetVMM ( .. ),
-  HasVMM
+  HasVMM,
+  
+  -- * Algebraic matrix operations
+
+  (.**.),
+  (.++.),
+  (.--.),
+  inverseAMat
 
   ) where
 
@@ -63,23 +68,22 @@ import Data.Function                ( on )
 import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( all )
 import Data.IntMap                  ( IntMap )
-import Data.List                    ( intercalate, genericReplicate )
+import Data.List                    ( intercalate )
 import Test.QuickCheck              ( Arbitrary, arbitrary, shrink, sized )
 
 import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero, GroupA, inverseA,
-                                      (.-.), MonoidM, (.*.), one, Semiring, FindOne, SemigroupA,
+                                      MonoidM, (.*.), Semiring, FindOne, SemigroupA,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
 import Auxiliary.AList              ( AList, asList )
-import Auxiliary.General            ( Key, Arc, Mat, (<.>), scaleLeft )
+import Auxiliary.General            ( Key, Arc, Mat, (<.>) )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
-                                      differenceWith2, UnionableHom, SetOps, SetOpsHom,
-                                      bigunionWith )
+                                      differenceWith2, UnionableHom, SetOps, bigunionWith )
 import Auxiliary.SetOpsInstances    ()
 
 -- | Matrix data type.
@@ -296,7 +300,7 @@ instance HasVMM IntMap SafeArray
 
 liftVecMatMult :: Functor o => 
   (i a -> b -> i' c) -> Matrix o i a -> b -> Matrix o i' c
-liftVecMatMult (.*) a b = rowMap (.* b) a
+liftVecMatMult mult a b = rowMap (`mult` b) a
 
 -- | A fully parametric matrix multiplication.
 -- In the particular case of a homogeneous vector-matrix multiplication setting
