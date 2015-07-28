@@ -54,13 +54,13 @@ instance Intersectable IntMap IntMap where
 
     intersectionWithKey = IM.intersectionWithKey
 
--- | Intersection with a complexity of /O/(@size@ left).
+-- | Intersection with a complexity of /O/(@'size' left@).
 
 instance Intersectable AList SafeArray where
 
     intersectionWithKey = capWithKey
 
--- | Intersection with a complexity of /O/(@size@ left).
+-- | Intersection with a complexity of /O/(@'size' left@).
 
 instance Intersectable IntMap SafeArray where
 
