@@ -31,6 +31,7 @@ module Algebraic.Matrix (
   filterMatrix,
   removeZeroesMatrix,
   emptyMatrix,
+  identityMatrix,
   
   -- * Functor operations
 
@@ -210,8 +211,15 @@ rowNumbers = keys . matrix
 rowDimension :: Mapping o => Matrix o i a -> Int
 rowDimension = length . rowNumbers
 
+-- | Returns the empty matrix of the same size as the argument matrix.
+
 emptyMatrix :: (Functor o, MappingV i) => Matrix o i a -> Matrix o i b
-emptyMatrix = Matrix . fmap (const empty) . matrix
+emptyMatrix = rowMap (const empty)
+
+-- | Returns the identity matrix of the same size as the argument matrix.
+
+identityMatrix :: (KeyFunctor o, Mapping i, MonoidM mm) => Matrix o i a -> Matrix o i mm
+identityMatrix = rowMapWithKey (const . unitVector)
 
 -- | An abstraction of the vector-matrix multiplication pattern.
 -- The two functions denote abstractions of a vector sum and a scalar multiplication
