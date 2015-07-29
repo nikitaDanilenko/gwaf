@@ -59,6 +59,8 @@ module Algebraic.Matrix (
   
   -- * Algebraic matrix operations
 
+  (**>),
+  (**>>),
   (.**.),
   (.***.),
   (.++.),
@@ -80,7 +82,7 @@ import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
 import Auxiliary.AList              ( AList, asList )
-import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>) )
+import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
@@ -331,6 +333,20 @@ instance HasVMM IntMap SafeArray
 liftVecMatMult :: Functor o => 
   (i a -> b -> i' c) -> Matrix o i a -> b -> Matrix o i' c
 liftVecMatMult mult a b = rowMap (`mult` b) a
+
+-- | Scalar multiplication of matrices.
+-- The multiplication @('*>>')@ is applied to every row.
+-- The resulting matrix may contain 'zero' entries.
+
+(**>>) :: (Functor o, Functor i, MonoidM mm) => mm -> Matrix o i mm -> Matrix o i mm
+(**>>) = scaleLeft (.*.)
+
+-- | Scalar multiplication of matrices, which checks the scalar for being a special constant.
+-- This function uses @('*>')@ and the resulting matrix does not contain zero entries.
+
+(**>) :: (Functor o, MappingV i, MonoidM mm, FindZero mm, FindOne mm) => 
+  mm -> Matrix o i mm -> Matrix o i mm
+(**>) = rowMap . (*>)
 
 -- | A fully parametric matrix multiplication.
 -- In the particular case of a homogeneous vector-matrix multiplication setting
