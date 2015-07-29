@@ -21,7 +21,7 @@ module Algebraic.Matrix (
 
   Matrix,
   matrix,
-  fromMat,
+  fromRows,
   fromMappings,
   toMat,
 
@@ -67,7 +67,7 @@ module Algebraic.Matrix (
   ) where
 
 import Data.Function                ( on )
-import Data.Foldable                ( Foldable )
+import Data.Foldable                ( Foldable, toList )
 import qualified Data.Foldable as F ( all )
 import Data.IntMap                  ( IntMap )
 import Data.List                    ( intercalate )
@@ -78,7 +78,7 @@ import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
 import Auxiliary.AList              ( AList, asList )
-import Auxiliary.General            ( Key, Arc, Mat, (<.>) )
+import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>) )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty )
@@ -98,6 +98,11 @@ import Auxiliary.SetOpsInstances    ()
 -- * The matrix rows are indexed with @[0 .. n-1]@ for some natural number /n/.
 --   For every @i <- [0 .. n-1]@ the @i@-th entry in the outer mapping denotes the @i@-th row
 --   of the matrix.
+--   
+-- This behaviour is guaranteed by the functions provided in this module.
+-- It is /not/ guaranteed in general, because it is possible to unwrap a matrix
+-- and manipulate the outer layer such that it violates one of the conditions.
+-- 
 -- 
 -- If the outer matrix layer is an instance of 'Lookup' and
 -- the inner one is an instance of 'MappingV',
@@ -143,16 +148,16 @@ toMat = map (fmap toRow) . toRow . matrix
 
 -- | Transforms a row of rows into a matrix.
 -- Note that this removes duplicate entries,
--- so that @'fromMat' . toMat' = 'id'@ holds,
--- but @'toMat' . 'fromMat' = 'id'@ is not true in general.
+-- so that @'fromRows' . 'map' 'snd' . toMat' = 'id'@ holds,
+-- but @'toMat' . 'fromMat' . 'map' 'snd' = 'id'@ is not true in general.
 
-fromMat :: (Mapping o, Mapping i) => Mat a -> Matrix o i a
-fromMat = fromMappings . map (fmap fromRow)
+fromRows :: (Mapping o, Mapping i) => [Row a] -> Matrix o i a
+fromRows = fromMappings . map fromRow
 
 -- | Transforms a list of indexed 'Mapping's into a matrix.
 
-fromMappings :: Mapping o => [Arc (i a)] -> Matrix o i a
-fromMappings = Matrix . fromRow
+fromMappings :: (Mapping o, Foldable f) => f (i a) -> Matrix o i a
+fromMappings = Matrix . fromRow . zip [0 ..] . toList
 
 -- | Auxiliary function that applies a supplied combinator to the collections inside the
 -- matrix parameters and wraps the result in a 'Matrix wrapper again.
@@ -429,9 +434,7 @@ instance (Mapping o, HasVMM i o, Semiring s) => SemigroupM (Matrix o i s) where
 instance (Mapping o, Mapping i, Arbitrary a) => Arbitrary (Matrix o i a) where
 
   arbitrary = sized fun where
-    fun n = fmap (fromMat . zip ks) 
-                 (mapM (fmap (asList . restrictKeys n) . const arbitrary) ks)
-      where ks = [0 .. n - 1]
+    fun n = fmap fromRows (mapM (fmap (asList . restrictKeys n) . const arbitrary) [0 .. n - 1])
 
   shrink m = map (\k -> Matrix (fmap (restrictKeys k) (restrictKeys k rs))) (rowNumbers m)
     where rs = matrix m
