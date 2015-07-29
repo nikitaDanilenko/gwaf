@@ -95,7 +95,7 @@ import Test.QuickCheck ( Arbitrary, Gen, sized, choose, suchThat, arbitrary )
 -- 
 -- > (g <.> f) x y = g (f x y).
 -- 
--- The infix binding of '(<.>)' is exactly one unit less than the one of '(.)',
+-- The infix binding of @('<.>')@ is exactly one unit less than the one of @('.')@,
 -- so that
 --   
 -- > f . g <.> h = (f . g) <.> h
