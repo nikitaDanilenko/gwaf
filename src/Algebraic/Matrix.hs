@@ -38,13 +38,15 @@ module Algebraic.Matrix (
   rowMapWithKey,
   rowMap,
 
-  -- * Query
+  -- * Query and modification
 
   (!!!),
   mAtZ,
   mAt,
   rowNumbers,
   rowDimension,
+  addValue,
+  addValueWith,
   
   -- * Vector-matrix multiplication
 
@@ -81,7 +83,8 @@ import Auxiliary.AList              ( AList, asList )
 import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>) )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
-import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty )
+import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
+                                      insert, insertWith )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
@@ -221,6 +224,26 @@ rowNumbers = keys . matrix
 
 rowDimension :: Mapping o => Matrix o i a -> Int
 rowDimension = length . rowNumbers
+
+-- | Inserts a value at a given position in the matrix.
+-- If there is already a value at that position, the supplied function is used to combine
+-- these two values.
+-- If the position is out of the row bounds,
+-- the original matrix is returned.
+
+addValueWith :: (KeyFunctor o, MappingV i) => 
+  (a -> a -> a) -> Key -> Key -> a -> Matrix o i a -> Matrix o i a
+addValueWith op i j x = Matrix . fmapWithKey f . matrix where
+
+    f k | i == k    = insertWith op j x
+        | otherwise = id
+
+-- | Adds a value at a given position and overwrites possibly existing values.
+-- If the position is out of the row bounds,
+-- the original matrix is returned.
+
+addValue :: (KeyFunctor o, MappingV i) => Key -> Key -> a -> Matrix o i a -> Matrix o i a
+addValue = addValueWith const
 
 -- | Returns the empty matrix of the same size as the argument matrix.
 
