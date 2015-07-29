@@ -27,7 +27,23 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Algebraic.Semiring, Auxiliary.Mapping, Auxiliary.SetOps, Auxiliary.AList, Auxiliary.General, Auxiliary.KeyedClasses
+  exposed-modules:   Algebraic.Closure,
+                     Algebraic.Matrix,
+                     Algebraic.Semiring, 
+                     Algebraic.Vector,
+
+                     Auxiliary.AList, 
+                     Auxiliary.General,
+                     Auxiliary.IntMapArbitrary,
+                     Auxiliary.KeyedClasses,
+                     Auxiliary.Mapping, 
+                     Auxiliary.SafeArray,
+                     Auxiliary.SetOps, 
+                     Auxiliary.SetOpsInstances,
+                     
+                     Graph.Graph,
+                     Graph.Path
+                       
   
   -- Modules included in this library but not exported.
   -- other-modules:       
