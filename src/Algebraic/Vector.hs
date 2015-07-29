@@ -45,7 +45,7 @@ module Algebraic.Vector (
 import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( foldr )
 
-import Algebraic.Semiring           ( SemigroupA, MonoidA, (.+.), zero, SemigroupM, MonoidM, (.*.),
+import Algebraic.Semiring           ( SemigroupA, MonoidA, (.+.), zero, MonoidM, (.*.),
                                       one, GroupA, inverseA, FindZero, isZero, isNotZero, FindOne,
                                       isOne )
 import Auxiliary.General            ( Key, (<.>), scaleLeft )
@@ -104,7 +104,7 @@ additiveInverse = fmap inverseA
 
 infixl 5 *>>
 
-(*>>) :: (Mapping vec, SemigroupM msg) => msg -> vec msg -> vec msg
+(*>>) :: (Functor vec, MonoidM mm) => mm -> vec mm -> vec mm
 (*>>) = scaleLeft (.*.)
 
 -- | Optimised scalar multiplication of a vector with a scalar.
