@@ -1,3 +1,14 @@
+----------------------------------------------------------------------------------------------------
+-- |
+-- Module      :  Auxiliary.PathSpec
+-- Copyright   :  (c) Nikita Danilenko 2015
+-- License     :  GPL Version 3
+-- Maintainer  :  nikita.danilenko.is@gmail.com
+-- Stability   :  experimental
+-- Portability :  portable
+-- 
+-- This module provides tests for the properties that should hold for paths.
+
 {-# Language ScopedTypeVariables #-}
 
 module Graph.PathSpec where
