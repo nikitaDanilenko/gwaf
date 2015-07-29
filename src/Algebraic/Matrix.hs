@@ -249,7 +249,7 @@ addValue = addValueWith const
 
 -- | Returns the empty matrix of the same size as the argument matrix.
 
-emptyMatrix :: (Functor o, MappingV i) => Matrix o i a -> Matrix o i b
+emptyMatrix :: (Functor o, MappingV i) => Matrix o i' a -> Matrix o i b
 emptyMatrix = rowMap (const empty)
 
 -- | Returns the identity matrix of the same size as the argument matrix.
