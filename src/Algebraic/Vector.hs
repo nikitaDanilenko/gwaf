@@ -37,17 +37,21 @@ module Algebraic.Vector (
   (*>>),
   (*>),
   unitVector,
-  unitVector2
+  unitVector2,
+  vectorSum
 
   ) where
 
+import Data.Foldable                ( Foldable )
+import qualified Data.Foldable as F ( foldr )
 
-import Algebraic.Semiring     ( SemigroupA, MonoidA, (.+.), zero, SemigroupM, MonoidM, (.*.), one,
-                                GroupA, inverseA, FindZero, isZero, isNotZero, FindOne, isOne )
-import Auxiliary.General      ( Key, (<.>), scaleLeft )
-import Auxiliary.KeyedClasses ( Lookup, maybeAt, KeyMaybeFunctor, ffilter )
-import Auxiliary.Mapping      ( Mapping, singleton, MappingV, empty )
-import Auxiliary.SetOps       ( UnionableHom, unionWith )
+import Algebraic.Semiring           ( SemigroupA, MonoidA, (.+.), zero, SemigroupM, MonoidM, (.*.),
+                                      one, GroupA, inverseA, FindZero, isZero, isNotZero, FindOne,
+                                      isOne )
+import Auxiliary.General            ( Key, (<.>), scaleLeft )
+import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyMaybeFunctor, ffilter )
+import Auxiliary.Mapping            ( Mapping, singleton, MappingV, empty )
+import Auxiliary.SetOps             ( UnionableHom, unionWith )
 
 -- | A safe version of a lookup operation, because non-existent values
 --   are mapped to the 'zero' of the underlying monoid.
@@ -123,3 +127,8 @@ unitVector v = singleton v one
 
 unitVector2 :: Mapping vec => Int -> vec ()
 unitVector2 x = singleton x ()
+
+-- | Adds all elements in a vector.
+
+vectorSum :: (Foldable v, MonoidA am) => v am -> am
+vectorSum = F.foldr (.+.) zero
