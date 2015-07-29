@@ -23,6 +23,7 @@ module Graph.Path (
   labels,
   lengthLabelled,
   toEitherList,
+  reverseLabelledPath,
 
   -- * Unlabelled paths
 
@@ -32,16 +33,19 @@ module Graph.Path (
   stepRight,
   verticesPath,
   pathFromList,
-  lengthPath
+  lengthPath,
+  reversePath
 
   ) where
 
+import Control.Applicative          ( liftA2 )
 import Data.Either                  ( partitionEithers )
 import qualified Data.Foldable as F ( foldr )
 import Data.Foldable                ( Foldable, toList )
-import Data.List                    ( intercalate )
+import Data.List                    ( intercalate, inits )
 import Data.Sequence                ( Seq, empty, singleton, (|>), (<|), fromList )
 import qualified Data.Sequence as S ( length )
+import Test.QuickCheck              ( Arbitrary, arbitrary, shrink )
 
 -- | The data type for labelled paths.
 -- Labelled paths are always non-empty.
@@ -65,6 +69,10 @@ instance Functor (LabelledPath k) where
 instance Foldable (LabelledPath k) where
 
   foldr f e = foldr f e . labels
+
+instance (Arbitrary k, Arbitrary v) => Arbitrary (LabelledPath k v) where
+
+  arbitrary = liftA2 labelledPathFrom arbitrary arbitrary
 
 -- | A path that starts at the specified position.
 
@@ -111,6 +119,8 @@ lengthLabelled = length . verticesLabelled
 labels :: LabelledPath k v -> [v]
 labels = snd . partitionEithers . toEitherList
 
+-- | Reverses a labelled path.
+
 reverseLabelledPath :: LabelledPath k v -> LabelledPath k v
 reverseLabelledPath = fromEitherList . reverse . toEitherList
 
@@ -135,6 +145,11 @@ newtype Path k = Path { getPath :: Seq k }
 instance Show k => Show (Path k) where
 
   show = intercalate " -> " . map show . verticesPath
+
+instance Arbitrary k => Arbitrary (Path k) where
+
+  arbitrary = fmap pathFromList arbitrary
+  shrink    = map pathFromList . inits . verticesPath
 
 -- | The empty path.
 
@@ -165,3 +180,8 @@ verticesPath = toList . getPath
 
 pathFromList :: [k] -> Path k
 pathFromList = Path . fromList
+
+-- | Reverses a path.
+
+reversePath :: Path k -> Path k
+reversePath = pathFromList . reverse . verticesPath
