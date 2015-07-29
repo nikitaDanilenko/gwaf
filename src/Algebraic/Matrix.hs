@@ -56,6 +56,11 @@ module Algebraic.Matrix (
   smultWithKey,
   HasHetVMM ( .. ),
   HasVMM,
+  (.*),
+  (.**),
+  (.*+-),
+  (.*-+),
+  (.*||),
   
   -- * Algebraic matrix operations
 
@@ -66,7 +71,9 @@ module Algebraic.Matrix (
   (.++.),
   (.+++.),
   (.--.),
-  inverseAMat
+  inverseAMat,
+  transposeSquare,
+  transposeNonSquare
 
   ) where
 
@@ -86,11 +93,12 @@ import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
-                                      insert, insertWith )
+                                      insert, insertWith, toMappingWith )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
-                                      differenceWith2, UnionableHom, SetOps, bigunionWith )
+                                      differenceWith2, UnionableHom, SetOps, bigunionWith,
+                                      (\\/) )
 import Auxiliary.SetOpsInstances    ()
 
 -- | Matrix data type.
@@ -156,8 +164,8 @@ toMat = map (fmap toRow) . toRow . matrix
 -- so that @'fromRows' . 'map' 'snd' . toMat' = 'id'@ holds,
 -- but @'toMat' . 'fromMat' . 'map' 'snd' = 'id'@ is not true in general.
 
-fromRows :: (Mapping o, Mapping i) => [Row a] -> Matrix o i a
-fromRows = fromMappings . map fromRow
+fromRows :: (Mapping o, Mapping i, Foldable f, Functor f) => f (Row a) -> Matrix o i a
+fromRows = fromMappings . fmap fromRow
 
 -- | Transforms a list of indexed 'Mapping's into a matrix.
 
@@ -325,6 +333,22 @@ instance HasVMM IntMap SafeArray
   vec1 s -> Matrix q vec2 s -> vec3 s
 (.**) = removeZeroes <.> vecMatMult (bigunionWith (.+.) empty) (const (*>))
 
+-- | Vector-matrix multiplication that ignores the values in the argument vector.
+
+(.*-+) :: HasVMM vec q => vec a -> Matrix q vec b -> vec b
+(.*-+) = mkVMMWith const (\_ _ e -> e)
+
+-- | Vector-matrix multiplication that ignores the values in the matrix.
+
+(.*+-) :: HasVMM vec q => vec a -> Matrix q vec b -> vec a
+(.*+-) = mkVMMWith const (\_ l _ -> l)
+
+-- | Vector-matrix multiplication that collects all outgoing edges and their
+-- respective labels.
+
+(.*||) :: HasVMM vec q => vec [Arc a] -> Matrix q vec a -> vec [Arc a]
+(.*||) = mkVMMWith (++) (\i es e -> (i, e) : es)
+
 -- Lift a vector-matrix multiplication to the matrix level by successively applying it to
 -- all the rows.
 -- Note that while the suffix suggests a vector-matrix multiplication,
@@ -409,6 +433,39 @@ smultWithKeys op = fmapWithKey <.> op
 
 smultWithKey :: Mapping m => (Key -> a -> b -> c) -> Key -> a -> m b -> m c
 smultWithKey op = smultWithKeys (const <.> op)
+
+-- | This function contains the main pattern for the computation of the transposition,
+-- while being parametric in the two controlling arguments,
+-- which decide what kind of transposition will be the result.
+
+preTranspose :: 
+  (HasVMM vec q, Unionable vec o, Mapping i, Functor o) => 
+  vec [Arc a] -> o [Arc a] -> Matrix q vec a -> Matrix o i a
+preTranspose vs cols m = Matrix (fmap fromRow (vs .*|| m \\/ cols))
+
+-- | Auxiliary function that creates a contiguous mapping with a constant value.
+
+mkMapping :: Mapping m => Int -> a -> m a
+mkMapping n x = toMappingWith x [0 .. n - 1]
+
+-- | Transposition of a square matrix.
+-- The requirement @'Unionable' vec q@ suggests that @q@ should be a
+-- 'MappingV' instance as well.
+
+transposeSquare :: (Unionable vec q, HasVMM vec q, Mapping q) => 
+  Matrix q vec a -> Matrix q vec a
+transposeSquare mat = preTranspose (mkMapping n []) (mkMapping n []) mat where
+  n  = rowDimension mat
+
+-- | Transposes a non-square matrix.
+-- The additional 'Int' parameter denotes the number of columns in the matrix.
+-- This number cannot be computed from the matrix alone,
+-- because missing positions can mean both zero values and non-existent ones.
+
+transposeNonSquare :: (Unionable vec q, HasVMM vec q, Mapping q) =>
+  Int -> Matrix q vec a -> Matrix q vec a
+transposeNonSquare cols mat = 
+  preTranspose (mkMapping (rowDimension mat) []) (mkMapping cols []) mat
 
 -- | The intersection of matrices is an intersection on the
 -- outer level followed by an intersection on each inner level.
