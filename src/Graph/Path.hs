@@ -50,49 +50,49 @@ import Test.QuickCheck              ( Arbitrary, arbitrary, shrink )
 -- | The data type for labelled paths.
 -- Labelled paths are always non-empty.
 
-newtype LabelledPath k v = LabelledPath { getLabelledPath :: Seq (Either k v) }
+newtype LabelledPath vertex label = LabelledPath { getLabelledPath :: Seq (Either vertex label) }
   deriving Eq
 
 -- | A (somewhat) pretty-printing instance, which puts the values along the edges in parentheses
 -- and intercalates arrows between the vertices.
 
-instance (Show k, Show v) => Show (LabelledPath k v) where
+instance (Show vertex, Show label) => Show (LabelledPath vertex label) where
 
   show = intercalate " -> " . map (either show (\x -> concat ["(", show x, ")"])) . toEitherList
 
-instance Functor (LabelledPath k) where
+instance Functor (LabelledPath vertex) where
 
   fmap f = LabelledPath . fmap (fmap f) . getLabelledPath
 
 -- | Folds the values along the labelled path.
 
-instance Foldable (LabelledPath k) where
+instance Foldable (LabelledPath vertex) where
 
   foldr f e = foldr f e . labels
 
-instance (Arbitrary k, Arbitrary v) => Arbitrary (LabelledPath k v) where
+instance (Arbitrary vertex, Arbitrary label) => Arbitrary (LabelledPath vertex label) where
 
   arbitrary = liftA2 labelledPathFrom arbitrary arbitrary
 
 -- | A path that starts at the specified position.
 
-initial :: k -> LabelledPath k v
+initial :: vertex -> LabelledPath vertex label
 initial = LabelledPath . singleton . Left
 
 -- | Adds a step to the end of the path.
 
-labelledStepRight :: LabelledPath k v -> v -> k -> LabelledPath k v
-labelledStepRight path v k = LabelledPath (getLabelledPath path |> Right v |> Left k)
+labelledStepRight :: LabelledPath vertex label -> label -> vertex -> LabelledPath vertex label
+labelledStepRight path l v = LabelledPath (getLabelledPath path |> Right l |> Left v)
 
 -- | Adds a step to the beginning of the path.
 
-labelledStepLeft :: k -> v -> LabelledPath k v -> LabelledPath k v
-labelledStepLeft k v path = LabelledPath (Left k <| Right v <| getLabelledPath path)
+labelledStepLeft :: vertex -> label -> LabelledPath vertex label -> LabelledPath vertex label
+labelledStepLeft v l path = LabelledPath (Left v <| Right l <| getLabelledPath path)
 
 -- | Creates a labelled path from an initial vertex and a list of pairs,
 -- where the first component is the edge label and the second one is the edge target.
 
-labelledPathFrom :: k -> [(v, k)] -> LabelledPath k v
+labelledPathFrom :: vertex -> [(label, vertex)] -> LabelledPath vertex label
 labelledPathFrom = foldl (uncurry . labelledStepRight) . initial
 
 -- | Transforms a labelled path into a pair. 
@@ -100,33 +100,33 @@ labelledPathFrom = foldl (uncurry . labelledStepRight) . initial
 -- and the second component is a list of pairs,
 -- where the first component is the edge label and the second one is the edge target.
 
-labelledPathToPair :: LabelledPath k v -> (k, [(v, k)])
+labelledPathToPair :: LabelledPath vertex label -> (vertex, [(label, vertex)])
 labelledPathToPair path = (s, uncurry (flip zip) (partitionEithers rest)) where
   Left s : rest = toEitherList path
 
 -- | Returns the vertices in their order of traversal on a labelled path.
 
-verticesLabelled :: LabelledPath k v -> [k]
+verticesLabelled :: LabelledPath vertex label -> [vertex]
 verticesLabelled = fst . partitionEithers . toEitherList
 
 -- | Returns the length of a labelled path, which is the number of vertices along that path.
 
-lengthLabelled :: LabelledPath k v -> Int
+lengthLabelled :: LabelledPath vertex label -> Int
 lengthLabelled = length . verticesLabelled
 
 -- | Returns the labels in their order of traversal on a labelled path.
 
-labels :: LabelledPath k v -> [v]
+labels :: LabelledPath vertex label -> [label]
 labels = snd . partitionEithers . toEitherList
 
 -- | Reverses a labelled path.
 
-reverseLabelledPath :: LabelledPath k v -> LabelledPath k v
+reverseLabelledPath :: LabelledPath vertex label -> LabelledPath vertex label
 reverseLabelledPath = fromEitherList . reverse . toEitherList
 
 -- | Transforms a labelled path into a list of 'Either' values.
 
-toEitherList :: LabelledPath k v -> [Either k v]
+toEitherList :: LabelledPath vertex label -> [Either vertex label]
 toEitherList = toList . getLabelledPath
 
 -- | Turns a list of 'Either' values into a path.
@@ -134,54 +134,54 @@ toEitherList = toList . getLabelledPath
 -- and no equal constructors at subsequent positions),
 -- this function is not exported.
 
-fromEitherList :: [Either k v] -> LabelledPath k v
+fromEitherList :: [Either vertex label] -> LabelledPath vertex label
 fromEitherList = LabelledPath . fromList
 
 -- | The data type for unlabelled paths.
 
-newtype Path k = Path { getPath :: Seq k }
+newtype Path vertex = Path { getPath :: Seq vertex }
   deriving Eq
 
-instance Show k => Show (Path k) where
+instance Show vertex => Show (Path vertex) where
 
   show = intercalate " -> " . map show . verticesPath
 
-instance Arbitrary k => Arbitrary (Path k) where
+instance Arbitrary vertex => Arbitrary (Path vertex) where
 
   arbitrary = fmap pathFromList arbitrary
   shrink    = map pathFromList . inits . verticesPath
 
 -- | The empty path.
 
-emptyPath :: Path k
+emptyPath :: Path vertex
 emptyPath = Path empty
 
 -- | Adds a step to the end of the path.
 
-stepRight :: Path k -> k -> Path k
-stepRight path k = Path (getPath path |> k)
+stepRight :: Path vertex -> vertex -> Path vertex
+stepRight path v = Path (getPath path |> v)
 
 -- | Adds a step to the beginning of the path.
 
-stepLeft :: k -> Path k -> Path k
-stepLeft k path = Path (k <| getPath path)
+stepLeft :: vertex -> Path vertex -> Path vertex
+stepLeft v path = Path (v <| getPath path)
 
 -- | Computes the length of a path.
 
-lengthPath :: Path k -> Int
+lengthPath :: Path vertex -> Int
 lengthPath = S.length . getPath
 
 -- | Returns the vertices on a path in their order of traveral.
 
-verticesPath :: Path k -> [k]
+verticesPath :: Path vertex -> [vertex]
 verticesPath = toList . getPath
 
 -- | Creates a path from a list of vertices.
 
-pathFromList :: [k] -> Path k
+pathFromList :: [vertex] -> Path vertex
 pathFromList = Path . fromList
 
 -- | Reverses a path.
 
-reversePath :: Path k -> Path k
+reversePath :: Path vertex -> Path vertex
 reversePath = pathFromList . reverse . verticesPath
