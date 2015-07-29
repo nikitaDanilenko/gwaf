@@ -22,6 +22,7 @@ module Graph.Path (
   verticesLabelled,
   labels,
   lengthLabelled,
+  toEitherList,
 
   -- * Unlabelled paths
 
@@ -40,6 +41,7 @@ import qualified Data.Foldable as F ( foldr )
 import Data.Foldable                ( Foldable, toList )
 import Data.List                    ( intercalate )
 import Data.Sequence                ( Seq, empty, singleton, (|>), (<|), fromList )
+import qualified Data.Sequence as S ( length )
 
 -- | The data type for labelled paths.
 -- Labelled paths are always non-empty.
@@ -109,10 +111,21 @@ lengthLabelled = length . verticesLabelled
 labels :: LabelledPath k v -> [v]
 labels = snd . partitionEithers . toEitherList
 
+reverseLabelledPath :: LabelledPath k v -> LabelledPath k v
+reverseLabelledPath = fromEitherList . reverse . toEitherList
+
 -- | Transforms a labelled path into a list of 'Either' values.
 
 toEitherList :: LabelledPath k v -> [Either k v]
 toEitherList = toList . getLabelledPath
+
+-- | Turns a list of 'Either' values into a path.
+-- Since the list does not necessarily have the alternating property (starts and ends with 'Left'
+-- and no equal constructors at subsequent positions),
+-- this function is not exported.
+
+fromEitherList :: [Either k v] -> LabelledPath k v
+fromEitherList = LabelledPath . fromList
 
 -- | The data type for unlabelled paths.
 
@@ -141,7 +154,7 @@ stepLeft k path = Path (k <| getPath path)
 -- | Computes the length of a path.
 
 lengthPath :: Path k -> Int
-lengthPath = length . verticesPath
+lengthPath = S.length . getPath
 
 -- | Returns the vertices on a path in their order of traveral.
 
