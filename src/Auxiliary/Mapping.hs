@@ -32,7 +32,8 @@ module Auxiliary.Mapping (
     cupWith,
     bigcupWith,
     cupLeft,
-    bigcupLeft
+    bigcupLeft,
+    emptyOf
 
     ) where
 
@@ -226,6 +227,12 @@ bigcupWith op = foldr (cupWith op)
 
 bigcupLeft :: (Foldable f, KeyFunctor f, MappingV m) => m a -> [f a] -> m a
 bigcupLeft = bigcupWith const
+
+-- | Returns the empty mapping of the same mapping instance as the argument.
+-- The argument is ignored.
+
+emptyOf :: MappingV m => m a -> m b
+emptyOf _ = empty
 
 -- | 'IntMap's provide the required functions (and laws) directly.
 
