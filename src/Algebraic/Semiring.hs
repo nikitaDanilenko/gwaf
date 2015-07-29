@@ -21,7 +21,7 @@
 -- 
 -- and with the deprecated package <http://hackage.haskell.org/package/monoids monoids>.
 
-{-# Language GeneralizedNewtypeDeriving, DeriveFunctor #-}
+{-# Language DeriveFunctor #-}
 
 module Algebraic.Semiring (
     
@@ -73,6 +73,7 @@ module Algebraic.Semiring (
 
 import Control.Applicative ( ZipList, Applicative ( .. ), liftA2 )
 import Control.Arrow       ( first, (***) )
+import Data.Function       ( on )
 import Data.List           ( genericReplicate )
 import Data.Maybe          ( isNothing )
 import Data.Monoid         ( First ( .. ), mappend )
@@ -407,7 +408,16 @@ instance GroupA n => GroupA (x -> n) where
 -- <http://hackage.haskell.org/package/weighted-regexp weighted-regexp>.
 
 newtype Number n = Number { number :: n }
-  deriving ( Eq, Ord, Num, Functor )
+  deriving ( Eq, Ord, Functor )
+
+instance Num n => Num (Number n) where
+  (+)         = Number <.> ((+) `on` number)
+  (*)         = Number <.> ((*) `on` number)
+  (-)         = Number <.> ((-) `on` number)
+  negate      = fmap negate
+  abs         = fmap abs
+  signum      = fmap signum
+  fromInteger = Number . fromInteger
 
 -- | Numbers are shown by removing their wrapper.
 
