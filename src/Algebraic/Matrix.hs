@@ -58,7 +58,9 @@ module Algebraic.Matrix (
   -- * Algebraic matrix operations
 
   (.**.),
+  (.***.),
   (.++.),
+  (.+++.),
   (.--.),
   inverseAMat
 
