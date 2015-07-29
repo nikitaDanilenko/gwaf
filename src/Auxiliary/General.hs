@@ -38,6 +38,9 @@ module Auxiliary.General (
     orderedLookup,
     mergeWith,
     consWith,
+    evens,
+    odds,
+    evensOdds,
 
     -- ** Union functions
 
@@ -80,6 +83,7 @@ module Auxiliary.General (
 
     ) where
 
+import Control.Arrow   ( (&&&) )
 import Data.Ord        ( comparing )
 import Test.QuickCheck ( Arbitrary, Gen, sized, choose, suchThat, arbitrary ) 
 
@@ -354,6 +358,23 @@ symmetricDifferenceByFst = symmetricDifferenceByFstWith (\_ _ -> Nothing)
 
 consWith :: (a -> b -> c) -> a -> b -> [c] -> [c]
 consWith = (<.>) (:) -- same as: @consWith op x y zs = op x y : zs@
+
+-- | Returns the values at the even positions of a list.
+
+evens :: [a] -> [a]
+evens (x : _ : xs) = x : evens xs
+evens l            = l
+
+-- | Returns the values at the odd positions of a list.
+
+odds :: [a] -> [a]
+odds (_ : x : xs) = x : odds xs
+odds _            = []
+
+-- | Splits a list into the values at its even positions and the values at its odd positions.
+
+evensOdds :: [a] -> ([a], [a])
+evensOdds = evens &&& odds
 
 -- | A ternary function that ignores its first two arguments and returns the third one.
 
