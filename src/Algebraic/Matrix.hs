@@ -76,7 +76,9 @@ module Algebraic.Matrix (
   transposeNonSquare,
   symmetricClosureWith,
   symmetricClosure,
-  symmetricClosureC
+  symmetricClosureC,
+  restrictDomain,
+  restrictCodomain
 
   ) where
 
@@ -96,12 +98,12 @@ import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
-                                      insertWith, toMappingWith )
+                                      insertWith, toMappingWith, mkMapping, toMapping )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
                                       differenceWith2, UnionableHom, SetOps, bigunionWith,
-                                      (\\/) )
+                                      (\\/), (/\\), (//\) )
 import Auxiliary.SetOpsInstances    ()
 
 -- | Matrix data type.
@@ -164,7 +166,7 @@ toMat = map (fmap toRow) . toRow . matrix
 
 -- | Transforms a row of rows into a matrix.
 -- Note that this removes duplicate entries,
--- so that @'fromRows' . 'map' 'snd' . toMat' = 'id'@ holds,
+-- so that @'fromRows' . 'map' 'snd' . 'toMat' = 'id'@ holds,
 -- but @'toMat' . 'fromMat' . 'map' 'snd' = 'id'@ is not true in general.
 
 fromRows :: (Mapping o, Mapping i, Foldable f, Functor f) => f (Row a) -> Matrix o i a
@@ -453,11 +455,6 @@ preTranspose ::
   vec [Arc a] -> o [Arc a] -> Matrix q vec a -> Matrix o i a
 preTranspose vs cols m = Matrix (fmap fromRow (vs .*|| m \\/ cols))
 
--- | Auxiliary function that creates a contiguous mapping with a constant value.
-
-mkMapping :: Mapping m => Int -> a -> m a
-mkMapping n x = toMappingWith x [0 .. n - 1]
-
 -- | Transposition of a square matrix.
 -- The requirement @'Unionable' vec q@ suggests that @q@ should be a
 -- 'MappingV' instance as well.
@@ -493,6 +490,34 @@ symmetricClosure ::
   (Unionable vec q, UnionableHom q, HasVMM vec q, Mapping q, SemigroupA asg) =>
   Matrix q vec asg -> Matrix q vec asg
 symmetricClosure = symmetricClosureWith (.+++.)
+
+-- | Creates a partial identity matrix of a given size from a vector.
+
+partialIdentity :: (MonoidM mm, MappingV vec, Mapping q, Unionable q q) 
+  => Int -> q a -> Matrix q vec mm
+partialIdentity n v = Matrix (fmapWithKey (const . unitVector) v \\/ mkMapping n empty)
+
+-- | Creates a partial identity matrix of a given size from a list of keys.
+
+partialIdentityList :: (MonoidM mm, MappingV vec, Mapping q, Unionable q q) 
+  => Int -> [Key] -> Matrix q vec mm
+partialIdentityList n = partialIdentity n . toMapping
+
+-- | Restricts the domain (the rows) of the matrix to those indices that are filled in the
+-- given vector.
+-- The remaining positions are mapped to empty vectors.
+
+restrictDomain :: (Intersectable vec' q, Unionable vec' q, Functor q, MappingV vec)
+  => Matrix q vec a -> vec' b -> Matrix q vec a
+restrictDomain m v = Matrix ((v /\\ mat) \\/ fmap (const empty) mat)
+  where mat = matrix m
+
+-- | Restricts the co-domain (the columns) of the matrix to those indices that are filled in the
+-- given vector.
+
+restrictCodomain :: (Intersectable vec vec', Functor q) 
+  => Matrix q vec a -> vec' b -> Matrix q vec a
+restrictCodomain m v = rowMap (//\ v) m
 
 -- | For a matrix /a/ this function computes /a '.++.' transposeSquare a/.
 -- The matrix /a/ is assumed to be a square matrix, but this condition is not checked.
@@ -569,4 +594,3 @@ instance (Mapping o, Mapping i, Arbitrary a) => Arbitrary (Matrix o i a) where
 
   shrink m = map (\k -> Matrix (fmap (restrictKeys k) (restrictKeys k rs))) (rowNumbers m)
     where rs = matrix m
-    
