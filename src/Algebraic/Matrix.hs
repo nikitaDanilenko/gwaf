@@ -52,8 +52,8 @@ module Algebraic.Matrix (
 
   vecMatMult,
   liftVecMatMult,
-  smultWithKeys,
-  smultWithKey,
+  sMultWithKeys,
+  sMultWithKey,
   HasHetVMM ( .. ),
   HasVMM,
   (.*),
@@ -288,7 +288,7 @@ vecMatMult fSum fMult vec = fSum . intersectionWithKey fMult vec . matrix
 -- The function 'mkVMMWith' should satisfy
 -- 
 -- [/vector-matrix multiplication/]
---  @'mkVMMWith' p t = 'vecMatMult' ('bigunionWith' p 'empty') ('smultWithKey' t)@
+--  @'mkVMMWith' p t = 'vecMatMult' ('bigunionWith' p 'empty') ('sMultWithKey' t)@
 
 class (Foldable vec1, Intersectable vec1 q, Mapping vec2, Unionable vec2 vec3, MappingV vec3)
         => HasHetVMM vec1 q vec2 vec3 where
@@ -298,7 +298,7 @@ class (Foldable vec1, Intersectable vec1 q, Mapping vec2, Unionable vec2 vec3, M
             -> vec1 a  
             -> Matrix q vec2 b
             -> vec3 c
-  mkVMMWith p t = vecMatMult (bigunionWith p empty) (smultWithKey t)
+  mkVMMWith p t = vecMatMult (bigunionWith p empty) (sMultWithKey t)
 
 instance HasHetVMM AList  AList     AList  AList
 instance HasHetVMM AList  IntMap    AList  AList
@@ -431,13 +431,13 @@ a .--. b = a .++. inverseAMat b
 -- The combination function takes the \"outer\" key of the value the mapping is scaled with
 -- and also the \"inner\" keys of the individual filled positions.
 
-smultWithKeys :: Mapping m => (Key -> a -> Key -> b -> c) -> Key -> a -> m b -> m c
-smultWithKeys op = fmapWithKey <.> op
+sMultWithKeys :: Mapping m => (Key -> a -> Key -> b -> c) -> Key -> a -> m b -> m c
+sMultWithKeys op = fmapWithKey <.> op
 
--- | A variant of 'smultWithKeys' that ignores the inner keys.
+-- | A variant of 'sMultWithKeys' that ignores the inner keys.
 
-smultWithKey :: Mapping m => (Key -> a -> b -> c) -> Key -> a -> m b -> m c
-smultWithKey op = smultWithKeys (const <.> op)
+sMultWithKey :: Mapping m => (Key -> a -> b -> c) -> Key -> a -> m b -> m c
+sMultWithKey op = sMultWithKeys (const <.> op)
 
 -- | This function contains the main pattern for the computation of the transposition,
 -- while being parametric in the two controlling arguments,
