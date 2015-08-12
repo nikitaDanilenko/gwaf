@@ -300,13 +300,6 @@ class (Foldable vec1, Intersectable vec1 q, Mapping vec2, Unionable vec2 vec3, M
             -> vec3 c
   mkVMMWith p t = vecMatMult (bigunionWith p empty) (smultWithKey t)
 
-mkVMMWith2 :: HasHetVMM vec1 q vec2 vec3 => (c -> c -> c)              -- ^ addition
-          -> (Key -> a -> b -> c)       -- ^ scalar multiplication
-          -> vec1 a  
-          -> Matrix q vec2 b
-          -> vec3 c
-mkVMMWith2 p t = vecMatMult (bigunionWith p empty) (smultWithKey t)
-
 instance HasHetVMM AList  AList     AList  AList
 instance HasHetVMM AList  IntMap    AList  AList
 instance HasHetVMM IntMap IntMap    IntMap IntMap
