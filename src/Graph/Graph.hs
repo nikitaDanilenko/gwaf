@@ -30,6 +30,8 @@ module Graph.Graph (
   withoutSuccessorsVec,
   successors,
   successorsWith,
+  predecessors,
+  predecessorsWith,
 
   -- * Algebraic graph operations
 
@@ -38,11 +40,11 @@ module Graph.Graph (
   ) where
 
 import Algebraic.Matrix       ( Matrix, rowNumbers, matrix, (!!!), addValue, emptyMatrix, HasVMM,
-                                mkVMMWith )
+                                transposeSquare )
 import Auxiliary.General      ( Key, Arc )
 import Auxiliary.KeyedClasses ( KeyFunctor, fmapWithKey, ffilterWithKey, Lookup )
 import Auxiliary.Mapping      ( Mapping, toMapping, isEmpty, keys, MappingV )
-import Auxiliary.SetOps       ( IntersectableHom, intersectionWith )
+import Auxiliary.SetOps       ( IntersectableHom, intersectionWith, Unionable )
 
 -- | Graphs are a type synonym for (square) matrices.
 -- The names of the parameters are a mnemonic for __q__uery and __vec__tor.
@@ -109,10 +111,32 @@ successors :: (Lookup q, MappingV vec) => Graph q vec a -> Vertex -> vec a
 successors = (!!!)
 -- same as: successors i g = markWith () [i] .*-- g
 
--- | Computes the successors of a vertex and then applied the supplied fuction to the result.
+-- | Computes the parametrised adjacency of a vertex and applies the supplied function
+-- to every value in the result vector.
+
+onAdjacency :: Functor vec => 
+  (Graph q vec a -> Vertex -> vec a) -> (Vertex -> a -> b) -> Graph q vec a -> Vertex -> vec b
+onAdjacency adj op g v = fmap (op v) (adj g v)
+
+-- | Computes the successors of a vertex and then applies the supplied fuction to the result.
 
 successorsWith :: (Lookup q, MappingV vec) => (Vertex -> a -> b) -> Graph q vec a -> Vertex -> vec b
-successorsWith op g v = fmap (op v) (successors g v)
+successorsWith = onAdjacency successors
+
+-- | Computes the predecessors of a vertex in a graph.
+-- This operation uses the transposition of a matrix,
+-- which results in a higher asymptotic complexity for larger vertex values.
+-- The worst-case complexity is quadratic in the number of vertices in the graph.
+
+predecessors :: (Unionable vec q, HasVMM vec q, Mapping q) => Graph q vec a -> Vertex -> vec a
+predecessors = successors . transposeSquare
+
+-- | Computes the predecessors of a vertex and applies the given function to every
+-- value in the result vector.
+
+predecessorsWith :: (Unionable vec q, HasVMM vec q, Mapping q) 
+  => (Vertex -> a -> b) -> Graph q vec a -> Vertex -> vec b
+predecessorsWith = onAdjacency predecessors
 
 -- | Adds an edge to a graph, overwriting the possibly existing label.
 
@@ -124,9 +148,6 @@ addEdge = addValue
 emptyGraph :: (Functor q, MappingV vec) => Graph q vec' a -> Graph q vec a
 emptyGraph = emptyMatrix
 
--- predecessors :: 
-
-
 -- | Discrete intersection of two graphs.
 -- The result contains '()'s at precisely those positions,
 -- at which both graphs have entries.
@@ -134,4 +155,3 @@ emptyGraph = emptyMatrix
 (/|\) :: (IntersectableHom q, IntersectableHom vec) => 
   Graph q vec a -> Graph q vec b -> Graph q vec ()
 (/|\) = intersectionWith (\_ _ -> ())
-
