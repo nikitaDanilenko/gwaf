@@ -25,6 +25,7 @@ module Auxiliary.Mapping (
     toMappingWith,
     toMapping,
     fromMapping,
+    mkMapping,
 
     -- * Mappings with variable sizes
     
@@ -136,6 +137,11 @@ toMapping = toMappingWith ()
 
 fromMapping :: Mapping m => m a -> [Key]
 fromMapping = keys
+
+-- | Auxiliary function that creates a contiguous mapping with a constant value.
+
+mkMapping :: Mapping m => Int -> a -> m a
+mkMapping n x = toMappingWith x [0 .. n - 1]
 
 -- | 'IntMap's provide all required functions directly.
     
