@@ -366,8 +366,9 @@ allUnion = bigunionWithE (++)
 
 -- | Vector-matrix multiplication that ignores the values in the argument vector.
 
-(.*-+) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Matrix q vec2 b -> vec3 b
-(.*-+) = vecMatMult2 leftmostUnion (\_ _ e -> e)
+(.*-+) :: (Intersectable vec1 q, Unionable vec2 vec3, MappingV vec3, Foldable vec1) =>
+  vec1 a -> Matrix q vec2 b -> vec3 b
+(.*-+) = vecMatMult leftmostUnion (\_ _ e -> e)
 
 -- | Vector-matrix multiplication that ignores the values in the matrix.
 
