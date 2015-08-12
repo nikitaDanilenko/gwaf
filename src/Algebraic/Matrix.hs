@@ -32,6 +32,9 @@ module Algebraic.Matrix (
   removeZeroesMatrix,
   emptyMatrix,
   identityMatrix,
+  bigunionWithE,
+  allUnion,
+  leftmostUnion,
   
   -- * Functor operations
 
@@ -51,6 +54,7 @@ module Algebraic.Matrix (
   -- * Vector-matrix multiplication
 
   vecMatMult,
+  vecMatMult2,
   liftVecMatMult,
   sMultWithKeys,
   sMultWithKey,
@@ -281,6 +285,13 @@ vecMatMult :: Intersectable t q => (t c -> d)                    -- ^ sum
                                 -> t a -> Matrix q i b -> d
 vecMatMult fSum fMult vec = fSum . intersectionWithKey fMult vec . matrix
 
+-- | A special instance of 'vecMatMult' where the sum function is provided completely,
+-- while the scalar multiplication is computed from a given operation.
+
+vecMatMult2 :: (Intersectable t q, Mapping i) =>
+  (t (i c) -> d) -> (Key -> a -> b -> c) -> t a -> Matrix q i b -> d
+vecMatMult2 bigsum  = vecMatMult bigsum . sMultWithKey
+
 -- | A fully parametric abstraction of vector-matrix multiplication.
 -- The type class summarises all necessary constraints and provides a default definition of
 -- a multiplication generator that depends on value operations only.
@@ -324,6 +335,21 @@ instance HasVMM AList  SafeArray
 instance HasVMM IntMap IntMap
 instance HasVMM IntMap SafeArray
 
+-- | A special instance of 'bigunionWith' that inserts values into an empty mapping.
+
+bigunionWithE :: (MappingV i, Unionable t i, Foldable f) => (a -> a -> a) -> f (t a) -> i a
+bigunionWithE op = bigunionWith op empty
+
+-- | The folded version of the left-biased union.
+
+leftmostUnion :: (MappingV i, Unionable t i, Foldable f) => f (t a) -> i a
+leftmostUnion = bigunionWithE const
+
+-- | A folded union that collects all possible values.
+
+allUnion :: (MappingV i, Unionable t i, Foldable f) => f (t [a]) -> i [a]
+allUnion = bigunionWithE (++)
+
 -- | The canonic implementation of the usual vector-matrix multiplication over semirings.
 -- The result vector may contain zeroes.
 
@@ -340,19 +366,20 @@ instance HasVMM IntMap SafeArray
 
 -- | Vector-matrix multiplication that ignores the values in the argument vector.
 
-(.*-+) :: HasVMM vec q => vec a -> Matrix q vec b -> vec b
-(.*-+) = mkVMMWith const (\_ _ e -> e)
+(.*-+) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Matrix q vec2 b -> vec3 b
+(.*-+) = vecMatMult2 leftmostUnion (\_ _ e -> e)
 
 -- | Vector-matrix multiplication that ignores the values in the matrix.
 
-(.*+-) :: HasVMM vec q => vec a -> Matrix q vec b -> vec a
-(.*+-) = mkVMMWith const (\_ l _ -> l)
+(.*+-) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Matrix q vec2 b -> vec3 a
+(.*+-) = vecMatMult2 leftmostUnion (\_ l _ -> l)
 
 -- | Vector-matrix multiplication that collects all outgoing edges and their
 -- respective labels.
+-- The type is restricted to simplify the application in case of the transposition.
 
 (.*||) :: HasVMM vec q => vec [Arc a] -> Matrix q vec a -> vec [Arc a]
-(.*||) = mkVMMWith (++) (\i es e -> (i, e) : es)
+(.*||) = vecMatMult2 allUnion (\i es e -> (i, e) : es)
 
 -- Lift a vector-matrix multiplication to the matrix level by successively applying it to
 -- all the rows.
