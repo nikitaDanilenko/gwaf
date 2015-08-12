@@ -73,7 +73,10 @@ module Algebraic.Matrix (
   (.--.),
   inverseAMat,
   transposeSquare,
-  transposeNonSquare
+  transposeNonSquare,
+  symmetricClosureWith,
+  symmetricClosure,
+  symmetricClosureC
 
   ) where
 
@@ -295,6 +298,13 @@ class (Foldable vec1, Intersectable vec1 q, Mapping vec2, Unionable vec2 vec3, M
             -> vec3 c
   mkVMMWith p t = vecMatMult (bigunionWith p empty) (smultWithKey t)
 
+mkVMMWith2 :: HasHetVMM vec1 q vec2 vec3 => (c -> c -> c)              -- ^ addition
+          -> (Key -> a -> b -> c)       -- ^ scalar multiplication
+          -> vec1 a  
+          -> Matrix q vec2 b
+          -> vec3 c
+mkVMMWith2 p t = vecMatMult (bigunionWith p empty) (smultWithKey t)
+
 instance HasHetVMM AList  AList     AList  AList
 instance HasHetVMM AList  IntMap    AList  AList
 instance HasHetVMM IntMap IntMap    IntMap IntMap
@@ -466,6 +476,31 @@ transposeNonSquare :: (Unionable vec q, HasVMM vec q, Mapping q) =>
   Int -> Matrix q vec a -> Matrix q vec a
 transposeNonSquare cols mat = 
   preTranspose (mkMapping (rowDimension mat) []) (mkMapping cols []) mat
+
+-- | An abstract symmetric closure that uses the supplied matrix operation
+-- to combine two matrices.
+-- The matrix argument is assumed to be a square matrix,
+-- but this condition is not checked.
+
+symmetricClosureWith :: (Unionable vec q, HasVMM vec q, Mapping q)
+  => (Matrix q vec a -> Matrix q vec a -> Matrix q vec a) -> Matrix q vec a -> Matrix q vec a
+symmetricClosureWith op m = m `op` transposeSquare m
+
+-- | For a matrix /a/ this function computes /a '.+++.' transposeSquare a/.
+-- The matrix /a/ is assumed to be a square matrix, but this condition is not checked.
+
+symmetricClosure :: 
+  (Unionable vec q, UnionableHom q, HasVMM vec q, Mapping q, SemigroupA asg) =>
+  Matrix q vec asg -> Matrix q vec asg
+symmetricClosure = symmetricClosureWith (.+++.)
+
+-- | For a matrix /a/ this function computes /a '.++.' transposeSquare a/.
+-- The matrix /a/ is assumed to be a square matrix, but this condition is not checked.
+
+symmetricClosureC ::
+  (Unionable vec q, UnionableHom q, HasVMM vec q, Mapping q, SemigroupA asg, FindZero asg) =>
+  Matrix q vec asg -> Matrix q vec asg
+symmetricClosureC = symmetricClosureWith (.++.)
 
 -- | The intersection of matrices is an intersection on the
 -- outer level followed by an intersection on each inner level.
