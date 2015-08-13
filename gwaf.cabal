@@ -13,7 +13,7 @@ version:             0.1.0.0
 
 synopsis:            Graphs With an Algebraic Flavour - A graph library based on algebraic concepts
 homepage:            https://github.com/nikitaDanilenko/gwaf
-license:             GPL-3
+license:             BSD3
 license-file:        LICENSE
 author:              Nikita Danilenko
 maintainer:          nikita.danilenko.is@gmail.com
@@ -37,12 +37,14 @@ library
                      Auxiliary.IntMapArbitrary,
                      Auxiliary.KeyedClasses,
                      Auxiliary.Mapping, 
+                     Auxiliary.MonadicSet,
                      Auxiliary.SafeArray,
                      Auxiliary.SetOps, 
                      Auxiliary.SetOpsInstances,
                      
                      Graph.Graph,
-                     Graph.Path
+                     Graph.Path,
+                     Graph.Paths
                        
   
   -- Modules included in this library but not exported.
