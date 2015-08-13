@@ -19,6 +19,16 @@ module Graph.Graph (
   -- * Graph data type and basic operations
 
   Graph,
+  GraphLL,
+  GraphLI,
+  GraphIL,
+  GraphII,
+  GraphAL,
+  GraphAI,
+  VecL,
+  VecI,
+  VecA,
+
   Vertex,
   verticesList,
   fmapAdjacencies,
@@ -39,17 +49,32 @@ module Graph.Graph (
 
   ) where
 
+import Data.IntMap            ( IntMap )
+
 import Algebraic.Matrix       ( Matrix, rowNumbers, matrix, (!!!), addValue, emptyMatrix, HasVMM,
                                 transposeSquare )
+import Auxiliary.AList        ( AList )
 import Auxiliary.General      ( Key, Arc )
 import Auxiliary.KeyedClasses ( KeyFunctor, fmapWithKey, ffilterWithKey, Lookup )
 import Auxiliary.Mapping      ( Mapping, toMapping, isEmpty, keys, MappingV )
+import Auxiliary.SafeArray    ( SafeArray )
 import Auxiliary.SetOps       ( IntersectableHom, intersectionWith, Unionable )
 
 -- | Graphs are a type synonym for (square) matrices.
 -- The names of the parameters are a mnemonic for __q__uery and __vec__tor.
 
 type Graph q vec a = Matrix q vec a
+
+type GraphLL a = Graph AList     AList  a
+type GraphLI a = Graph AList     IntMap a
+type GraphIL a = Graph IntMap    AList  a
+type GraphII a = Graph IntMap    IntMap a
+type GraphAL a = Graph SafeArray AList  a
+type GraphAI a = Graph SafeArray IntMap a
+
+type VecL a = AList     a
+type VecI a = IntMap    a
+type VecA a = SafeArray a
 
 -- | Vertices are 'Key's.
 
