@@ -22,11 +22,12 @@
 module Graph.Prune ( 
 
   chop,
+  chopShallow
 
   ) where
 
 import Control.Monad             ( mzero, mplus )
-import Control.Monad.Trans       ( lift )
+import Control.Monad.Trans.Class ( lift )
 import Control.Monad.Trans.Maybe ( MaybeT, runMaybeT )
 import Data.Foldable             ( toList )
 import Data.Maybe                ( catMaybes )
