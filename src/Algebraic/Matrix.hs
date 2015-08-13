@@ -2,7 +2,7 @@
 -- |
 -- Module      :  Auxiliary.Matrix
 -- Copyright   :  (c) Nikita Danilenko 2015
--- License     :  GPL Version 3
+-- License     :  BSD3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
 -- Stability   :  experimental
 -- Portability :  portable

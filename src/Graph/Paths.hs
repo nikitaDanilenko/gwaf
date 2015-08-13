@@ -2,7 +2,7 @@
 -- |
 -- Module      :  Graph.Paths
 -- Copyright   :  (c) Nikita Danilenko 2015
--- License     :  GPL Version 3
+-- License     :  BSD3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
 -- Stability   :  experimental
 -- Portability :  portable
@@ -116,7 +116,7 @@ type VPath = Path Vertex
 (.*~+) = vecMatMult2 leftmostUnion (\i (p, m) y -> (p `stepRight` i, y .+. m))
 
 -- | A fully parametric reachability scheme.
--- It takes a list of initially unvisited vertices,
+-- It takes a vector of initially unvisited vertices,
 -- an initial vector, a list of multiplications, and a list of graphs,
 -- and computes the reachability steps from the initial vector through the graph list
 -- by applying the given multiplications in sequence.
