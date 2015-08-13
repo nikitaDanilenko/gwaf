@@ -12,7 +12,7 @@
 -- (located in the package containers-0.5.6.3).
 -- Said implementation is based upon the one given in
 -- 
--- * David King, John Launchbury, Structuring Depth-First Search Algorithms in Haskell, POPL 1995
+-- * David King, John Launchbury, Structuring Depth-First Search Algorithms in Haskell, POPL 1995,
 --   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.52.6526&rep=rep1&type=pdf available here>.
 --  
 -- The implementation is extended to arbitrary values in the set and some additional functions
@@ -87,7 +87,7 @@ newtype Set a b = Set { runSet :: IntMap a -> (b, IntMap a) }
 
 instance Monad (Set a) where
 
-  return x    = Set (\m -> (x, m))
+  return x    = Set (\im -> (x, im))
   Set m >>= f = Set (\im -> let (b, im') = m im
                             in runSet (f b) im')
 
