@@ -22,7 +22,12 @@
 module Graph.Prune ( 
 
   chop,
-  chopShallow
+  chopShallow,
+  chopDeep,
+  pruneDisjoint,
+  pruneDisjointUpToStart,
+  pruneDisjointUpToEnd,
+  pruneDisjointUpToStartEnd
 
   ) where
 
@@ -38,13 +43,8 @@ import Prelude hiding            ( mapM )
 
 import Auxiliary.General         ( Key, Arc, Row )
 import Auxiliary.MonadicSet      ( Set, SetM, include, contains, runWithNew )
-import Graph.Path                -- ( LabelledPath, labelledStepRight, initial, stepRight, pathFromList )
+import Graph.Path                ( Path, stepRight, emptyPath )
 
-import Graph.Paths
-import Algebraic.Matrix
-import Graph.Graph
-import Auxiliary.Mapping
-import Auxiliary.AList
 
 -- | This function computes a single list of arcs in a reachability forest.
 -- The basic idea is to apply this function to each reachability forest from
@@ -93,13 +93,15 @@ chop firstUnique keyOf extend start = chopSubforest where
     act      | firstUnique = (markI >>)
              | otherwise   = id
 
--- | This function takes a 'Traversable' filled with @('Arc' 'Forest' a)@ values
+-- | This function takes a 'Traversable' filled with @(a, 'Forest' a)@ values
 -- and computes possible paths through every single forest starting with the empty path.
 -- The forests should be shortest-path forests.
+-- The Boolean argument answers the question, whether the first vertex of the path is allowed
+-- to occur multiple times as the first vertex or not.
 -- The suffix \"shallow\" is a mnemonic for the fact that the pruning begins at the
 -- top-most level, rather than one level below.
 -- 
--- Note that the choice of 'Traversable' structures filled with 'Arc's is somewhat
+-- Note that the choice of 'Traversable' structures is somewhat
 -- orthogonal to the application with 'Mapping's,
 -- because the keys are implicit in case of mappings.
 -- However, this type is more general and thus applicable beyond the 'Mapping' context.
@@ -109,37 +111,60 @@ chopShallow :: Traversable t =>
             -> (a -> Key)           -- ^ The key value of @a@.
             -> (a -> p -> p)        -- ^ Abstract path extension.
             -> (a -> Forest a -> p) -- ^ Computes the initial path.
-            -> t (a, Forest a)      -- ^ The structure containing all arcs in question.
+            -> t (a, Forest a)      -- ^ The structure containing all pairs in question.
             -> SetM [p]
-chopShallow firstUnique keyOf extend start = fmap (catMaybes . toList) . mapM (runMaybeT . f) where
-    f (i, forest) = chop firstUnique keyOf extend (start i forest) [Node i forest]
-{-
-chopDeep :: Bool 
+chopShallow firstUnique keyOf ext start = fmap (catMaybes . toList) . mapM (runMaybeT . uncurry f)
+  where f i forest = chop firstUnique keyOf ext (start i forest) [Node i forest]
+
+-- | This function proceeds in a similar fashion as 'chopShallow', but instead of starting at
+-- the top-most level, it allows multiple occurrences of the last path element.
+-- Since the function 'chop' finds at most one path per forest,
+-- for every pair @(i, forest)@ in the traversable structure,
+-- the @forest@ value is decomposed into singleton forests of its trees.
+-- Then each singleton forest is searched for a path and the value @i@ is used to extend
+-- the path by its last step.
+-- Since the outer layer is not taken into account, 
+-- when checking for previously visited vertices,
+-- the values at the top level may occur in the forest as well.
+-- This is not the case, if the forests are shortest reachability forests,
+-- because in this situation there are no shorter paths to the top-most values.
+
+chopDeep :: Traversable t =>
+            Bool 
          -> (a -> Key)
          -> (a -> p -> p)
-         -> (Key -> Forest a -> p)
-         -> t (Arc (Forest a))
-         -> SetM [b]-}
--- chopDeep firstUnique keyOf extend start = mapM (runMaybeT . uncurry (mapM . g)) where
+         -> (a -> Forest a -> p)
+         -> t (a, Forest a)
+         -> SetM [p]
+chopDeep firstUnique keyOf extend start = 
+  fmap catMaybes . mapM (runMaybeT . uncurry g) . concatMap (uncurry (map . (,))) . toList
+    where g i tree = fmap (extend i) (chop firstUnique keyOf extend (start i [tree]) [tree])
 
---   g i forest = include i >> fmap (extend ) chop firstUnique keyOf extend (start i forest) forest
+-- | Computes a list of shortest pairwise disjoint paths.
+-- The set represented by this list is maximal with respect to inclusion (in the forest).
 
-pruneDisjoint bnds = 
-  runWithNew bnds . chopShallow True id (flip stepRight) (\_ _ -> pathFromList [])
+pruneDisjoint :: Traversable t => (Key, Key) -> t (Key, Forest Key) -> [Path Key]
+pruneDisjoint = pruneWithNew (chopShallow True id (flip stepRight) (\_ _ -> emptyPath))
 
-mat3 :: GraphIL ()
-mat3 = fromMappings (map toMapping
-                [ [2, 3, 4],
-                  [3],
-                  [5, 6],
-                  [6, 9],
-                  [6],
-                  [3, 7],
-                  [0, 8],
-                  [],
-                  [],
-                  [4]])
+-- | Computes a list of shortest paths that are disjoint up to their start vertex.
+-- The set of paths represented by this list is maximal with respect to inclusion (in the forest).
 
-start = toMappingWith [] [0,1] :: AList (Forest Vertex)
-end = toMapping [7,8] :: AList ()
-reachForest = shortestOneGraphWith (.*++)
+pruneDisjointUpToStart :: Traversable t => (Key, Key) -> t (Key, Forest Key) -> [Path Key]
+pruneDisjointUpToStart = pruneWithNew (chopShallow False id (flip stepRight) (\_ _ -> emptyPath))
+
+-- | Computes a list of shortest paths that are disjoint up to their end vertex.
+-- The set of paths represented by this list is maximal with respect to inclusion (in the forest).
+
+pruneDisjointUpToEnd :: Traversable t => (Key, Key) -> t (Key, Forest Key) -> [Path Key]
+pruneDisjointUpToEnd = pruneWithNew (chopDeep True id (flip stepRight) (\_ _ -> emptyPath))
+
+-- | Computes a list of shortest paths that are disjoint up to their start and end vertices.
+-- The set of paths represented by this list is maximal with respect to inclusion (in the forest).
+
+pruneDisjointUpToStartEnd :: Traversable t => (Key, Key) -> t (Key, Forest Key) -> [Path Key]
+pruneDisjointUpToStartEnd = pruneWithNew (chopDeep False id (flip stepRight) (\_ _ -> emptyPath))
+
+-- | Short-hand definition to avoid mentioning the bounds arguments.
+
+pruneWithNew :: (t -> Set a b) -> (Key, Key) -> t -> b
+pruneWithNew c bnds = runWithNew bnds . c
