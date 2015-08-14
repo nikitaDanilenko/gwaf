@@ -49,6 +49,10 @@ module Graph.Paths (
   shortestFirstVerticesWith,
   shortestOneMultiplicationWith,
   shortestOneGraphWith,
+  reachabilityForest,
+  reachabilityForestSimple,
+  reachabilityForestOneGraph,
+  reachabilityForestOneGraphSimple,
 
   -- * Auxiliaries
 
@@ -333,3 +337,33 @@ shortestOneGraphWith ::
   -> q' c
   -> vec a
 shortestOneGraphWith mult start g = dropEmptyIntersections (stepsOneGraphWith mult start g)
+
+
+-- | Computes the shortest reachability forest through a list of graphs.
+
+reachabilityForest :: 
+  (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
+  => vec (Forest Vertex) -> [Graph q vec' b] -> q' c -> vec (Forest Vertex)
+reachabilityForest = shortestOneMultiplicationWith (.*++)
+
+-- | Similar to 'reachabilityForest', but overwrites all values in the start vector with the empty forest.
+
+reachabilityForestSimple ::
+  (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
+  => vec a -> [Graph q vec' b] -> q' c -> vec (Forest Vertex)
+reachabilityForestSimple = reachabilityForest . fmap (const [])
+
+-- | Computes the shortest reachability forest through a single graph.
+
+reachabilityForestOneGraph :: 
+  (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
+  => vec (Forest Vertex) -> Graph q vec' b -> q' c -> vec (Forest Vertex)
+reachabilityForestOneGraph = shortestOneGraphWith (.*++)
+
+-- | Similar to 'reachabilityForestOneGraph',
+-- but overwrites all values in the start vector with the empty forest.
+
+reachabilityForestOneGraphSimple ::
+  (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
+  => vec a -> Graph q vec' b -> q' c -> vec (Forest Vertex)
+reachabilityForestOneGraphSimple = reachabilityForestOneGraph . fmap (const [])
