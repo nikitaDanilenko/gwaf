@@ -37,22 +37,29 @@ import Data.Tree                 ( Forest, Tree ( Node ) )
 import Prelude hiding            ( mapM )
 
 import Auxiliary.General         ( Key, Arc, Row )
-import Auxiliary.MonadicSet      ( Set, SetM, include, contains )
-import Graph.Path                ( LabelledPath, labelledStepRight, initial )
+import Auxiliary.MonadicSet      ( Set, SetM, include, contains, runWithNew )
+import Graph.Path                -- ( LabelledPath, labelledStepRight, initial, stepRight, pathFromList )
+
+import Graph.Paths
+import Algebraic.Matrix
+import Graph.Graph
+import Auxiliary.Mapping
+import Auxiliary.AList
 
 -- | This function computes a single list of arcs in a reachability forest.
 -- The basic idea is to apply this function to each reachability forest from
 -- a given vertex in a vertex set and to obtain a set of disjoint paths.
 -- The term \"disjoint\" can be relaxed through the first parameter,
 -- by allowing the paths to intersect at their first vertex.
+-- The term \"path\" is also relaxed to the arbitrary type @p@.
 
 chop :: Bool               -- ^ Is the first vertex along the path unique?
      -> (a -> Key)         -- ^ Returns the 'Key' value of @a@ (e.g. 'fst' if @a = 'Arc' b@).
-     -> (a -> b)           -- ^ Returns the value of @a@ (e.g. 'snd' if @a = 'Arc' b@).
-     -> LabelledPath Key b -- ^ The path in which the newly found steps are inserted.
+     -> (a -> p -> p)      -- ^ Combinator function for abstract path extensions.
+     -> p                  -- ^ Initial abstract path.
      -> Forest a           -- ^ The forest that is pruned.
-     -> MaybeT (Set ()) (LabelledPath Key b)
-chop firstUnique vertexOf valueOf path = chopSubforest where
+     -> MaybeT (Set ()) p
+chop firstUnique keyOf extend start = chopSubforest where
 
   -- If the forest is empty, then the the result is Nothing.
 
@@ -75,19 +82,20 @@ chop firstUnique vertexOf valueOf path = chopSubforest where
     -- namely either the path that is obtained from chopping the subforest ts and adding
     -- the current vertex or (if the result is Nothing) chopping the subforest fs.
 
-    check _    | null ts   = act (return (add path))
+    check _    | null ts   = act (return (update start))
                | otherwise = do markI
-                                fmap add (chopSubforest ts) `mplus` fs'
+                                fmap update (chopSubforest ts) `mplus` fs'
 
-    i        = vertexOf v
+    i        = keyOf v
     fs'      = chopSubforest fs
-    add path = labelledStepRight path (valueOf v) i
+    update   = extend v 
     markI    = lift (include i)
     act      | firstUnique = (markI >>)
              | otherwise   = id
 
 -- | This function takes a 'Traversable' filled with @('Arc' 'Forest' a)@ values
 -- and computes possible paths through every single forest starting with the empty path.
+-- The forests should be shortest-path forests.
 -- The suffix \"shallow\" is a mnemonic for the fact that the pruning begins at the
 -- top-most level, rather than one level below.
 -- 
@@ -97,10 +105,41 @@ chop firstUnique vertexOf valueOf path = chopSubforest where
 -- However, this type is more general and thus applicable beyond the 'Mapping' context.
 
 chopShallow :: Traversable t =>
-               Bool
-            -> (a -> Key)
-            -> (a -> b)
-            -> t (Arc (Forest a))
-            -> SetM [LabelledPath Key b]
-chopShallow firstUnique vertexOf valueOf = fmap (catMaybes . toList) . mapM (runMaybeT . f) where
-    f (i, forest) = chop firstUnique vertexOf valueOf (initial i) forest
+               Bool                 -- ^ Is the first vertex unique?
+            -> (a -> Key)           -- ^ The key value of @a@.
+            -> (a -> p -> p)        -- ^ Abstract path extension.
+            -> (a -> Forest a -> p) -- ^ Computes the initial path.
+            -> t (a, Forest a)      -- ^ The structure containing all arcs in question.
+            -> SetM [p]
+chopShallow firstUnique keyOf extend start = fmap (catMaybes . toList) . mapM (runMaybeT . f) where
+    f (i, forest) = chop firstUnique keyOf extend (start i forest) [Node i forest]
+{-
+chopDeep :: Bool 
+         -> (a -> Key)
+         -> (a -> p -> p)
+         -> (Key -> Forest a -> p)
+         -> t (Arc (Forest a))
+         -> SetM [b]-}
+-- chopDeep firstUnique keyOf extend start = mapM (runMaybeT . uncurry (mapM . g)) where
+
+--   g i forest = include i >> fmap (extend ) chop firstUnique keyOf extend (start i forest) forest
+
+pruneDisjoint bnds = 
+  runWithNew bnds . chopShallow True id (flip stepRight) (\_ _ -> pathFromList [])
+
+mat3 :: GraphIL ()
+mat3 = fromMappings (map toMapping
+                [ [2, 3, 4],
+                  [3],
+                  [5, 6],
+                  [6, 9],
+                  [6],
+                  [3, 7],
+                  [0, 8],
+                  [],
+                  [],
+                  [4]])
+
+start = toMappingWith [] [0,1] :: AList (Forest Vertex)
+end = toMapping [7,8] :: AList ()
+reachForest = shortestOneGraphWith (.*++)
