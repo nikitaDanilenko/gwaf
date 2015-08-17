@@ -42,6 +42,8 @@ module Graph.Graph (
   successorsWith,
   predecessors,
   predecessorsWith,
+  numberOfVertices,
+  numberOfArcs,
 
   -- * Algebraic graph operations
 
@@ -49,16 +51,18 @@ module Graph.Graph (
 
   ) where
 
-import Data.IntMap            ( IntMap )
+import Data.Foldable                ( Foldable )
+import qualified Data.Foldable as F ( sum )
+import Data.IntMap                  ( IntMap )
 
-import Algebraic.Matrix       ( Matrix, rowNumbers, matrix, (!!!), addValue, emptyMatrix, HasVMM,
-                                transposeSquare )
-import Auxiliary.AList        ( AList )
-import Auxiliary.General      ( Key, Arc )
-import Auxiliary.KeyedClasses ( KeyFunctor, fmapWithKey, ffilterWithKey, Lookup )
-import Auxiliary.Mapping      ( Mapping, toMapping, isEmpty, keys, MappingV )
-import Auxiliary.SafeArray    ( SafeArray )
-import Auxiliary.SetOps       ( IntersectableHom, intersectionWith, Unionable )
+import Algebraic.Matrix             ( Matrix, rowNumbers, matrix, (!!!), addValue, emptyMatrix, 
+                                      HasVMM, transposeSquare )
+import Auxiliary.AList              ( AList )
+import Auxiliary.General            ( Key, Arc )
+import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, ffilterWithKey, Lookup )
+import Auxiliary.Mapping            ( Mapping, toMapping, isEmpty, keys, MappingV, size )
+import Auxiliary.SafeArray          ( SafeArray )
+import Auxiliary.SetOps             ( IntersectableHom, intersectionWith, Unionable )
 
 -- | Graphs are a type synonym for (square) matrices.
 -- The names of the parameters are a mnemonic for __q__uery and __vec__tor.
@@ -162,6 +166,16 @@ predecessors = successors . transposeSquare
 predecessorsWith :: (Unionable vec q, HasVMM vec q, Mapping q) 
   => (Vertex -> a -> b) -> Graph q vec a -> Vertex -> vec b
 predecessorsWith = onAdjacency predecessors
+
+-- | Returns the number of vertices in a graph.
+
+numberOfVertices :: Mapping q => Graph q vec a -> Int
+numberOfVertices = size . vertices
+
+-- | Returns the number of arcs in a graph.
+
+numberOfArcs :: (KeyFunctor q, Foldable q, Mapping vec) => Graph q vec a -> Int
+numberOfArcs = F.sum . fmapAdjacencies (const size)
 
 -- | Adds an edge to a graph, overwriting the possibly existing label.
 
