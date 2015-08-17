@@ -71,7 +71,9 @@ module Algebraic.Matrix (
   (**>),
   (**>>),
   (.**.),
+  (.**=.),
   (.***.),
+  (.***=.),
   (.++.),
   (.+++.),
   (.--.),
@@ -415,11 +417,23 @@ liftVecMatMult mult a b = rowMap (`mult` b) a
   Matrix o vec1 s -> Matrix q vec2 s -> Matrix o vec3 s
 (.***.) = liftVecMatMult (.*)
 
+-- | A homogeneous variant of @('.***.')@.
+
+(.***=.) :: (Functor q, HasVMM vec q, Semiring s) =>
+  Matrix q vec s -> Matrix q vec s -> Matrix q vec s
+(.***=.) = (.***.)
+
 -- | Similar to @('.***.')@, but also removes zeroes and uses an optimised scalar multiplication.
 
 (.**.) :: (Functor o, HasHetVMM vec1 q vec2 vec3, MappingV vec2, Semiring s, FindZero s, FindOne s)
   =>  Matrix o vec1 s -> Matrix q vec2 s -> Matrix o vec3 s
 (.**.) = liftVecMatMult (.**)
+
+-- | A homogeneous variant of @('.**')@.
+
+(.**=.) :: (Functor q, HasVMM vec q, Semiring s, FindZero s, FindOne s)
+  =>  Matrix q vec s -> Matrix q vec s -> Matrix q vec s
+(.**=.) = liftVecMatMult (.**)
 
 -- | A fully parametric matrix addition.
 -- In the particular case of a homogeneous setting
