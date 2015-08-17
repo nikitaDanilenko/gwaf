@@ -82,7 +82,8 @@ module Algebraic.Matrix (
   symmetricClosure,
   symmetricClosureC,
   restrictDomain,
-  restrictCodomain
+  restrictCodomain,
+  toUnitMatrix
 
   ) where
 
@@ -94,7 +95,7 @@ import Data.List                    ( intercalate )
 import Test.QuickCheck              ( Arbitrary, arbitrary, shrink, sized )
 
 import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero, GroupA, inverseA,
-                                      MonoidM, (.*.), Semiring, FindOne, SemigroupA,
+                                      MonoidM, (.*.), one, Semiring, FindOne, SemigroupA,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
 import Auxiliary.AList              ( AList, asList )
@@ -547,6 +548,12 @@ symmetricClosureC ::
   (Unionable vec q, UnionableHom q, HasVMM vec q, Mapping q, SemigroupA asg, FindZero asg) =>
   Matrix q vec asg -> Matrix q vec asg
 symmetricClosureC = symmetricClosureWith (.++.)
+
+-- | Maps a matrix to a matrix that contains 'one's at exactly those positions that
+-- were previously filled.
+
+toUnitMatrix :: (Functor q, Functor vec, MonoidM mm) => Matrix q vec a -> Matrix q vec mm
+toUnitMatrix = fmap (const one)
 
 -- | The intersection of matrices is an intersection on the
 -- outer level followed by an intersection on each inner level.
