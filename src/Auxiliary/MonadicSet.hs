@@ -43,7 +43,8 @@ module Auxiliary.MonadicSet (
   get,
   ifInSet,
   runWith,
-  runWithNew
+  runWithNew,
+  runWithNewSize
   ) where
 
 import Control.Applicative         ( Applicative (..), liftA )
@@ -189,3 +190,9 @@ runWithNew :: (Key, Key) -> Set a b -> b
 runWithNew _ = runWith IM.empty
 
 #endif
+
+-- | Computes the effect of a set starting with the empty set indexed from /0/ to /n - 1/,
+-- where /n/ is the first argument.
+
+runWithNewSize :: Int -> Set a b -> b
+runWithNewSize n = runWithNew (0, n - 1)
