@@ -21,3 +21,8 @@ src/*.js
 src/*.png
 src/*.css
 src/*.gif
+
+# Sublime project structure
+
+*.sublime-project
+*.sublime-workspace
