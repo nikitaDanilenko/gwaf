@@ -33,21 +33,23 @@ module Auxiliary.SafeArray (
 
   ) where
 
-import Control.Applicative       ( liftA2 )
-import Control.Monad             ( mplus )
-import Data.Array                ( Array, elems, listArray, assocs, array,
-                                   range, inRange )
-import qualified Data.Array as A ( (!), bounds )
-import Data.Maybe                ( catMaybes, mapMaybe )
-import Test.QuickCheck           ( Arbitrary, arbitrary )
+import Control.Applicative          ( liftA2 )
+import Control.Monad                ( mplus )
+import Data.Array                   ( Array, elems, listArray, assocs, array, range, inRange )
+import qualified Data.Array as A    ( (!), bounds )
+import Data.Foldable                ( Foldable )
+import qualified Data.Foldable as F ( foldr )
+import Data.Maybe                   ( catMaybes, mapMaybe )
+import Data.Traversable             ( Traversable, traverse )
+import Test.QuickCheck              ( Arbitrary, arbitrary )
 
-import Auxiliary.General         ( Key, wrap, mkArbitrary, unionByFstWith )
-import Auxiliary.KeyedClasses    ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybeWithKey,
-                                   Lookup, clookup )
-import Auxiliary.Mapping         ( Mapping, values, size, toRow, fromRow )
-import Auxiliary.SetOps          ( Intersectable, intersectionWithKey, intersectionWith,
-                                   Unionable, unionWith, Complementable, differenceWith,
-                                   differenceWith2, SetOps )
+import Auxiliary.General            ( Key, wrap, mkArbitrary, unionByFstWith )
+import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, fmapMaybeWithKey,
+                                      Lookup, clookup )
+import Auxiliary.Mapping            ( Mapping, values, size, toRow, fromRow )
+import Auxiliary.SetOps             ( Intersectable, intersectionWithKey, intersectionWith,
+                                      Unionable, unionWith, Complementable, differenceWith,
+                                      differenceWith2, SetOps )
 
 -- | A safe array variant in the sense that queries behave rather as a lookup and not
 -- as a pure indexing operation.
@@ -66,28 +68,36 @@ arr ! i | inRange (bounds arr) i = safeArray arr A.! i
 
 instance Functor SafeArray where
 
-    fmap f  = Safe . fmap (fmap f) . safeArray
+  fmap f  = Safe . fmap (fmap f) . safeArray
+
+instance Foldable SafeArray where
+
+  foldr f e = foldr f e . values
+
+instance Traversable SafeArray where
+
+  traverse f = fmap Safe . traverse (traverse f) . safeArray
 
 instance KeyFunctor SafeArray where
 
-    fmapWithKey f a = Safe (listArray (A.bounds arr) (map (uncurry (fmap . f)) (assocs arr)))
-        where arr = safeArray a
+  fmapWithKey f a = Safe (listArray (A.bounds arr) (map (uncurry (fmap . f)) (assocs arr)))
+    where arr = safeArray a
 
 instance KeyMaybeFunctor SafeArray where
 
-    fmapMaybeWithKey f a = Safe (listArray (A.bounds arr) (map (uncurry g) (assocs arr)))
-        where arr = safeArray a
-              g i x = x >>= f i
+  fmapMaybeWithKey f a = Safe (listArray (A.bounds arr) (map (uncurry g) (assocs arr)))
+    where arr = safeArray a
+          g i x = x >>= f i
 
 instance Lookup SafeArray where
 
-    clookup = flip (!)
+  clookup = flip (!)
 
 -- | Shows the underlying array.
 
 instance Show a => Show (SafeArray a) where
     
-    show = show . safeArray
+  show = show . safeArray
 
 instance Arbitrary a => Arbitrary (SafeArray a) where
 
@@ -136,7 +146,7 @@ instance Mapping SafeArray where
 
 zipWithOpKey :: (Key -> Maybe a -> Maybe b -> Maybe c) -> SafeArray a -> SafeArray b -> SafeArray c
 zipWithOpKey op x y = Safe (listArray bnds [op i (x ! i) (y ! i) | i <- range bnds])
-    where bnds = (0, max (size x) (size y) - 1)
+  where bnds = (0, max (size x) (size y) - 1)
 
 -- | A variant of 'zipWithOpKey' that ignores the key.
 
@@ -168,8 +178,8 @@ zipWithDownKey op = zipWithOpKey (liftA2 . op)
 
 zipWithUp :: (a -> a -> a) -> SafeArray a -> SafeArray a -> SafeArray a
 zipWithUp op = zipWithOp op'
-    where op' (Just x) (Just y) = Just (x `op` y)
-          op' x        y        = x `mplus` y
+  where op' (Just x) (Just y) = Just (x `op` y)
+        op' x        y        = x `mplus` y
 
 -- | The intersection operation has an /O/@('max' ('fullSize' left) ('fullSize' right))@ complexity.
 
