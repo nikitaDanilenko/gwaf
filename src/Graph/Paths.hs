@@ -21,11 +21,17 @@ module Graph.Paths (
   -- * Multiplications
 
   (.*~),
+  (.*~=),
   (.*~~),
+  (.*~~=),
   (.*++),
+  (.*++=),
   (.*+++),
+  (.*+++=),
   (.*#),
+  (.*#=),
   (.*~+),
+  (.*~+=),
 
   -- * Reachability functions
 
@@ -78,7 +84,8 @@ module Graph.Paths (
 import Data.Traversable       ( Traversable )
 import Data.Tree              ( Forest, Tree ( Node ) )
 
-import Algebraic.Matrix       ( HasHetVMM, vecMatMult2, allUnion, leftmostUnion, bigunionWithE )
+import Algebraic.Matrix       ( HasVMM, HasHetVMM, vecMatMult2, allUnion, leftmostUnion,
+                                bigunionWithE )
 import Algebraic.Semiring     ( Number, SemigroupA, (.+.) )
 import Auxiliary.General      ( Arc )
 import Auxiliary.KeyedClasses ( KeyFunctor, addKeys )
@@ -100,10 +107,20 @@ type VPath = Path Vertex
 (.*~) :: HasHetVMM vec1 q vec2 vec3 => vec1 VPath -> Graph q vec2 a -> vec3 VPath
 (.*~) = vecMatMult2 leftmostUnion (\i p _ -> p `stepRight` i)
 
+-- | A homogeneous variant of @('.*~')@.
+
+(.*~=) :: HasVMM vec q => vec VPath -> Graph q vec a -> vec VPath
+(.*~=) = (.*~)
+
 -- | This multiplication extends all given path by exactly one step.
 
 (.*~~) :: HasHetVMM vec1 q vec2 vec3 => vec1 [VPath] -> Graph q vec2 a -> vec3 [VPath]
 (.*~~) = vecMatMult2 allUnion (\i ps _ -> map (`stepRight` i) ps)
+
+-- | A homogeneous variant of @('.*~~')@.
+
+(.*~~=) :: HasVMM vec q => vec [VPath] -> Graph q vec a -> vec [VPath]
+(.*~~=) = (.*~~)
 
 -- | Assuming that a vector is labelled with a reachability forest at every index
 -- this multiplication computes the reachability forest that is obtained by walking a single step
@@ -113,11 +130,21 @@ type VPath = Path Vertex
   vec1 (Forest Vertex) -> Graph q vec2 a -> vec3 (Forest Vertex)
 (.*++) = vecMatMult2 allUnion (\i forest _ -> [Node i forest])
 
+-- | A homogeneous variant of @('.*~~')@.
+
+(.*++=) :: HasVMM vec q => vec (Forest Vertex) -> Graph q vec a -> vec (Forest Vertex)
+(.*++=) = (.*++)
+
 -- | A relative of @('.*++')@ that also collects the values along the edges.
 
 (.*+++) :: HasHetVMM vec1 q vec2 vec3 => 
   vec1 (Forest (Arc a)) -> Graph q vec2 a -> vec3 (Forest (Arc a))
 (.*+++) = vecMatMult2 allUnion (\i forest e -> [Node (i, e) forest])
+
+-- | A homogeneous variant of @('.*+++')@.
+
+(.*+++=) :: HasVMM vec q => vec (Forest (Arc a)) -> Graph q vec a -> vec (Forest (Arc a))
+(.*+++=) = (.*+++)
 
 -- | The underlying multiplication of this function is the following one.
 -- It maps every value that is encountered in the adjacency list of a vertex to 1
@@ -125,6 +152,11 @@ type VPath = Path Vertex
 
 (.*#) :: (Num a, HasHetVMM vec1 q vec2 vec3) => vec1 (Number a) -> Graph q vec2 b -> vec3 (Number a)
 (.*#) = vecMatMult2 (bigunionWithE (+)) (\_ _ _ -> 1)
+
+-- | A homogeneous variant of @('.*#')@.
+
+(.*#=) :: (Num a, HasVMM vec q) => vec (Number a) -> Graph q vec b -> vec (Number a)
+(.*#=) = (.*#)
 
 -- | Conceptually this is the vector matrix multiplication in the product semiring
 -- of the semiring of paths and another semiring.
@@ -136,6 +168,11 @@ type VPath = Path Vertex
 (.*~+) :: (HasHetVMM vec1 q vec2 vec3, SemigroupA asg) => 
   vec1 (VPath, asg) -> Graph q vec2 asg -> vec3 (VPath, asg)
 (.*~+) = vecMatMult2 leftmostUnion (\i (p, m) y -> (p `stepRight` i, y .+. m))
+
+-- | A homogeneous variant of @('.*~+')@.
+
+(.*~+=) :: (HasVMM vec q, SemigroupA asg) => vec (VPath, asg) -> Graph q vec asg -> vec (VPath, asg)
+(.*~+=) = (.*~+)
 
 -- | A fully parametric reachability scheme.
 -- It takes a vector of initially unvisited vertices,
