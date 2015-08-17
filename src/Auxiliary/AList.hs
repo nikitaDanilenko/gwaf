@@ -29,6 +29,7 @@ import Data.Function                ( on )
 import Data.List                    ( groupBy, sortBy, subsequences )
 import Data.Maybe                   ( mapMaybe )
 import Data.Ord                     ( comparing )
+import Data.Traversable             ( Traversable, traverse)
 import Test.QuickCheck              ( Arbitrary, arbitrary, shrink )
 
 import Auxiliary.General            ( Row, wrap, orderedLookup, unionByFstWith,
@@ -66,6 +67,10 @@ instance Functor AList where
 instance Foldable AList where
 
     foldr f e = foldr (f . snd) e . asList
+
+instance Traversable AList where
+
+    traverse f = fmap AL . traverse (traverse f) . asList
 
 -- | Creates a new association list from a 'Row'.
 -- Duplicate entries in the 'Row' are ignored and only the first value in the 'Row'
