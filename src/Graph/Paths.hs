@@ -54,23 +54,41 @@ module Graph.Paths (
   reachabilityForestOneGraph,
   reachabilityForestOneGraphSimple,
 
+  shortestDisjointWith,
+  shortestDisjointSimpleWith,
+  shortestDisjoint,
+  shortestDisjointWithSize,
+  shortestDisjointWithFirstSize,
+  shortestDisjointUpToStart,
+  shortestDisjointUpToStartWithSize,
+  shortestDisjointUpToStartWithFirstSize,
+  shortestDisjointUpToEnd,
+  shortestDisjointUpToEndWithSize,
+  shortestDisjointUpToEndWithFirstSize,
+  shortestDisjointUpToStartEnd,
+  shortestDisjointUpToStartEndWithSize,
+  shortestDisjointUpToStartEndWithFirstSize,
+
   -- * Auxiliaries
 
   VPath,
   
   ) where
 
+import Data.Traversable       ( Traversable )
 import Data.Tree              ( Forest, Tree ( Node ) )
 
 import Algebraic.Matrix       ( HasHetVMM, vecMatMult2, allUnion, leftmostUnion, bigunionWithE )
 import Algebraic.Semiring     ( Number, SemigroupA, (.+.) )
 import Auxiliary.General      ( Arc )
-import Auxiliary.KeyedClasses ( KeyFunctor )
-import Auxiliary.Mapping      ( MappingV, Mapping, empty, isEmpty )
+import Auxiliary.KeyedClasses ( KeyFunctor, addKeys )
+import Auxiliary.Mapping      ( MappingV, Mapping, empty, isEmpty, toRow )
 import Auxiliary.SetOps       ( Intersectable, Unionable, UnionableHom, Complementable,
                                 (\\\), (//\), bigunionLeft )
-import Graph.Graph            ( Graph, Vertex, vertices )
+import Graph.Graph            ( Graph, Vertex, vertices, numberOfVertices )
 import Graph.Path             ( Path, stepRight )
+import Graph.Prune            ( pruneDisjoint, pruneDisjointUpToStart, pruneDisjointUpToEnd,
+                                pruneDisjointUpToStartEnd )
 
 -- | An abbreviation for paths that consist of vertices.
 
@@ -338,6 +356,219 @@ shortestOneGraphWith ::
   -> vec a
 shortestOneGraphWith mult start g = dropEmptyIntersections (stepsOneGraphWith mult start g)
 
+-- | Auxiliary function for the outermost call in shortestDisjoint*.
+
+shortestDisjointOuter :: KeyFunctor vec => 
+     (   (Vertex, Vertex) 
+      -> vec (Vertex, Forest Vertex) 
+      -> [VPath])
+  -> Vertex
+  -> Vertex
+  -> vec (Forest Vertex)
+  -> [VPath]
+shortestDisjointOuter strategy lb ub = strategy (lb, ub) . addKeys
+
+-- | This function takes a pruning strategy for the reachability forest and computes a list
+-- of paths such that the following hold: 
+-- * the paths are disjoint in the sense specified by the pruning strategy;
+-- * the list of paths is maximal with respect to inclusion.
+
+shortestDisjointWith :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+     Complementable vec q, KeyFunctor q) =>
+     (   (Vertex, Vertex) 
+      -> vec (Vertex, Forest Vertex) 
+      -> [VPath])                 -- ^ The pruning strategy.
+  -> Vertex                             -- ^ The lower range bound.
+  -> Vertex                             -- ^ The upper range bound.
+  -> vec (Forest Vertex)                -- ^ The start vector.
+  -> [Graph q vec' a]                   -- ^ The list of graphs traversed in sequence.
+  -> q' b                               -- ^ The target vector.
+  -> [VPath]
+shortestDisjointWith strategy lb ub start gs target =
+  shortestDisjointOuter strategy lb ub (reachabilityForest start gs target)
+
+-- | A variant of 'shortestDisjointWith' that replaces all values in the start vector with
+-- the empty forest.
+
+shortestDisjointSimpleWith :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+     Complementable vec q, KeyFunctor q) =>
+     (   (Vertex, Vertex) 
+      -> vec (Vertex, Forest Vertex) 
+      -> [VPath])                 -- ^ The pruning strategy.
+  -> Vertex                             -- ^ The lower range bound.
+  -> Vertex                             -- ^ The upper range bound.
+  -> vec a                              -- ^ The start vector.
+  -> [Graph q vec' b]                   -- ^ The list of graphs traversed in sequence.
+  -> q' c                               -- ^ The target vector.
+  -> [VPath]
+shortestDisjointSimpleWith strategy lb ub start gs target =
+  shortestDisjointOuter strategy lb ub (reachabilityForestSimple start gs target)
+
+-- | This function computes a list of pairwise disjoint shortest paths from the start vector to
+-- the target vector.
+-- The list is maximal with respect to inclusion.
+
+shortestDisjoint :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ First considered vertex.
+  -> Vertex            -- ^ Last considered vertex.
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjoint = shortestDisjointSimpleWith pruneDisjoint
+
+-- | A variant of 'shortestDisjoint' that takes a number of vertices in the traversed graphs
+-- rather than a lower and an upper bound.
+
+shortestDisjointWithSize :: 
+     (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+      Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ The number of vertices in the graph(s).
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointWithSize n = shortestDisjoint 0 (n - 1)
+
+-- | A variant of 'shortestDisjointWithSize' that uses the number of vertices in the first
+-- graph in the list of traversed graphs.
+
+shortestDisjointWithFirstSize :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, Mapping q) =>
+     vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointWithFirstSize start gs = 
+    shortestDisjointWithSize (numberOfVertices (head gs)) start gs
+
+-- | This function computes a list of shortest paths from the start vector to
+-- the target vector that are pairwise disjoint up to their first vertex.
+-- The list is maximal with respect to inclusion.
+
+shortestDisjointUpToStart :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ First considered vertex.
+  -> Vertex            -- ^ Last considered vertex.
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStart = shortestDisjointSimpleWith pruneDisjointUpToStart
+
+-- | A variant of 'shortestDisjointUpToStart' that takes a number of 
+-- vertices in the traversed graphs rather than a lower and an upper bound.
+
+shortestDisjointUpToStartWithSize :: 
+     (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+      Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ The number of vertices in the graph(s).
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStartWithSize n = shortestDisjointUpToStart 0 (n - 1)
+
+-- | A variant of 'shortestDisjointUpToStartWithSize' that uses the number of vertices in the first
+-- graph in the list of traversed graphs.
+
+shortestDisjointUpToStartWithFirstSize :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, Mapping q) =>
+     vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStartWithFirstSize start gs = 
+    shortestDisjointUpToStartWithSize (numberOfVertices (head gs)) start gs
+
+-- | This function computes a list of shortest paths from the start vector to
+-- the target vector that are pairwise disjoint up to their last vertex.
+-- The list is maximal with respect to inclusion.
+
+shortestDisjointUpToEnd :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ First considered vertex.
+  -> Vertex            -- ^ Last considered vertex.
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToEnd = shortestDisjointSimpleWith pruneDisjointUpToEnd
+
+-- | A variant of 'shortestDisjointUpToEnd' that takes a number of 
+-- vertices in the traversed graphs rather than a lower and an upper bound.
+
+shortestDisjointUpToEndWithSize :: 
+     (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+      Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ The number of vertices in the graph(s).
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToEndWithSize n = shortestDisjointUpToEnd 0 (n - 1)
+
+-- | A variant of 'shortestDisjointUpToEndWithSize' that uses the number of vertices in the first
+-- graph in the list of traversed graphs.
+
+shortestDisjointUpToEndWithFirstSize :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, Mapping q) =>
+     vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToEndWithFirstSize start gs = 
+    shortestDisjointUpToEndWithSize (numberOfVertices (head gs)) start gs
+
+-- | This function computes a list of shortest paths from the start vector to
+-- the target vector that are pairwise disjoint up to their first and last vertex.
+-- The list is maximal with respect to inclusion.
+
+shortestDisjointUpToStartEnd :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ First considered vertex.
+  -> Vertex            -- ^ Last considered vertex.
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStartEnd = shortestDisjointSimpleWith pruneDisjointUpToStartEnd
+
+-- | A variant of 'shortestDisjointUpToStartEnd' that takes a number of 
+-- vertices in the traversed graphs rather than a lower and an upper bound.
+
+shortestDisjointUpToStartEndWithSize :: 
+     (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q',
+      Complementable vec q, KeyFunctor q) =>
+     Vertex            -- ^ The number of vertices in the graph(s).
+  -> vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStartEndWithSize n = shortestDisjointUpToStartEnd 0 (n - 1)
+
+-- | A variant of 'shortestDisjointUpToStartEndWithSize' that uses the number of vertices in the
+-- first graph in the list of traversed graphs.
+
+shortestDisjointUpToStartEndWithFirstSize :: 
+    (Traversable vec, HasHetVMM vec q vec' vec, Intersectable vec q', 
+     Complementable vec q, Mapping q) =>
+     vec a             -- ^ The start vector.
+  -> [Graph q vec' b]  -- ^ The list of graphs traversed in sequence.
+  -> q' c              -- ^ The target vector.
+  -> [VPath]
+shortestDisjointUpToStartEndWithFirstSize start gs = 
+    shortestDisjointUpToStartEndWithSize (numberOfVertices (head gs)) start gs
 
 -- | Computes the shortest reachability forest through a list of graphs.
 
