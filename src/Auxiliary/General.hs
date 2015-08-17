@@ -26,6 +26,7 @@ module Auxiliary.General (
     wrap,
     idThird,
     onSecond,
+    stepwise,
 
     -- * Comparison
 
@@ -131,6 +132,15 @@ wrap = uncurry (fmap . (,))
 
 onSecond :: (a -> b -> c) -> (k, a) -> (k, b) -> (k, c)
 onSecond f (i, x) (_, y) = (i, f x y)
+
+-- | Stepwise computation of a result.
+-- The first argument is used to check whether there is an improvement possibility,
+-- the second argument improves the current value in the positive case.
+-- If no improvement is possible, a finishing step (the third argument) yields the final result.
+
+stepwise :: (a -> Maybe b) -> (b -> a -> a) -> (a -> c) -> a -> c
+stepwise try improve finish = fun where
+    fun current = maybe (finish current) fun (fmap (`improve` current) (try current))
 
 -- | A non-overloaded version of 'min' that takes an ordering function as an argument
 -- and returns the smaller one. 
