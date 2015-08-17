@@ -38,6 +38,7 @@ module Graph.Graph (
   withSuccessors,
   withoutSuccessorsList,
   withoutSuccessorsVec,
+  withoutSuccessorsOuter,
   successors,
   successorsWith,
   predecessors,
@@ -120,14 +121,14 @@ withSuccessors = keys . filterAdjacencies (const (not . isEmpty))
 
 -- | Removes all vertices from the outer layer that have a non-empty adjacency list.
 
-withoutSuccs :: (Mapping q, Mapping vec) => Graph q vec a -> q (vec a)
-withoutSuccs = filterAdjacencies (const isEmpty)
+withoutSuccessorsOuter :: (Mapping q, Mapping vec) => Graph q vec a -> q (vec a)
+withoutSuccessorsOuter = filterAdjacencies (const isEmpty)
 
 -- | Returns the list of all vertices in the graph that have no successors.
 -- In symmetric graphs these are the isolated vertices.
 
 withoutSuccessorsList :: (Mapping q, Mapping vec) => Graph q vec a -> [Vertex]
-withoutSuccessorsList = keys . withoutSuccs
+withoutSuccessorsList = keys . withoutSuccessorsOuter
 
 -- | Returns a vector of those vertices in the graph that have no successors.
 
