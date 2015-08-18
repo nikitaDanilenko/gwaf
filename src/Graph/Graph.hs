@@ -16,7 +16,7 @@
 
 module Graph.Graph ( 
 
-  -- * Graph data type and basic operations
+  -- * Graph data types
 
   Graph,
   GraphLL,
@@ -28,8 +28,10 @@ module Graph.Graph (
   VecL,
   VecI,
   VecA,
-
   Vertex,
+
+  -- * Basic graph operations
+
   verticesList,
   fmapAdjacencies,
   vertices,
@@ -45,6 +47,15 @@ module Graph.Graph (
   predecessorsWith,
   numberOfVertices,
   numberOfArcs,
+  emptyGraph,
+  emptyGraph2,
+
+  -- * Path operations
+
+  pathToGraphWith,
+  pathToGraph,
+  pathToSymGraphWith,
+  pathToSymGraph,
 
   -- * Algebraic graph operations
 
@@ -52,6 +63,7 @@ module Graph.Graph (
 
   ) where
 
+import Control.Applicative          ( liftA2, (<*>) )
 import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( sum )
 import Data.IntMap                  ( IntMap )
@@ -64,6 +76,7 @@ import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, ffilterWithKey, L
 import Auxiliary.Mapping            ( Mapping, toMapping, isEmpty, keys, MappingV, size )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( IntersectableHom, intersectionWith, Unionable )
+import Graph.Path                   ( Path, pathToArcList )
 
 -- | Graphs are a type synonym for (square) matrices.
 -- The names of the parameters are a mnemonic for __q__uery and __vec__tor.
@@ -178,15 +191,65 @@ numberOfVertices = size . vertices
 numberOfArcs :: (KeyFunctor q, Foldable q, Mapping vec) => Graph q vec a -> Int
 numberOfArcs = F.sum . fmapAdjacencies (const size)
 
--- | Adds an edge to a graph, overwriting the possibly existing label.
+-- | Adds an arc to a graph, overwriting the possibly existing label.
+
+addArc :: (KeyFunctor q, MappingV vec) => Vertex -> Vertex -> a -> Graph q vec a -> Graph q vec a
+addArc = addValue
+
+-- | Adds an edge (symmetric arc) to a graph, overwriting possibly existing labels.
 
 addEdge :: (KeyFunctor q, MappingV vec) => Vertex -> Vertex -> a -> Graph q vec a -> Graph q vec a
-addEdge = addValue
+addEdge i j v = addArc j i v . addArc i j v
 
 -- | Returns the empty graph of a specific inner type.
 
 emptyGraph :: (Functor q, MappingV vec) => Graph q vec' a -> Graph q vec a
 emptyGraph = emptyMatrix
+
+-- | Returns the empty graph of the same type as the input graph.
+
+emptyGraph2 :: (Functor q, MappingV vec) => Graph q vec a -> Graph q vec a
+emptyGraph2 = emptyMatrix
+
+-- | A parametric variant of the computation of a graph from a path.
+
+graphFromPathWith :: (Vertex -> Vertex -> a -> Graph q vec a -> Graph q vec a)
+                  -> (Vertex -> Vertex -> a)
+                  -> Path Vertex
+                  -> Graph q vec a
+                  -> Graph q vec a
+graphFromPathWith add f path graph = foldr (uncurry (liftA2 (<*>) add f)) graph (pathToArcList path)
+-- The folded function is \(i, j) -> add i j (f i j).
+
+-- | Inserts a path into a graph.
+-- For each arc along the path the arc and the value computed by the first argument is added to
+-- the graph.
+-- Thus we have
+-- 
+-- > pathToGraphWith f graph path = addArc p0 p1 (f p0 p1) (addArc p1 p2 (f p1 p2) ... (addArc p(K-1) pK (f p(K-1) pK graph)))
+
+pathToGraphWith :: (KeyFunctor q, MappingV vec) =>
+  (Vertex -> Vertex -> a) -> Path Vertex -> Graph q vec a -> Graph q vec a
+pathToGraphWith = graphFromPathWith addArc
+
+-- | Inserts a path into a unit graph.
+
+pathToGraph :: (KeyFunctor q, MappingV vec) =>
+  Path Vertex -> Graph q vec () -> Graph q vec ()
+pathToGraph = pathToGraphWith (\_ _ -> ())
+
+-- | Inserts a path and its reversed version into a graph.
+-- For each arc along the path, the corresponding /edge/ is added to the graph.
+
+pathToSymGraphWith :: (KeyFunctor q, MappingV vec) =>
+ (Vertex -> Vertex -> a) -> Path Vertex -> Graph q vec a -> Graph q vec a
+pathToSymGraphWith = graphFromPathWith addEdge
+
+-- | Inserts a path and its reversed version into a unit graph.
+
+pathToSymGraph :: (KeyFunctor q, MappingV vec) =>
+  Path Vertex -> Graph q vec () -> Graph q vec ()
+pathToSymGraph = pathToSymGraphWith (\_ _ -> ())
 
 -- | Discrete intersection of two graphs.
 -- The result contains '()'s at precisely those positions,
