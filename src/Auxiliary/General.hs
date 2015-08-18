@@ -27,6 +27,7 @@ module Auxiliary.General (
     idThird,
     onSecond,
     stepwise,
+    stepwise2,
 
     -- * Comparison
 
@@ -134,13 +135,20 @@ onSecond :: (a -> b -> c) -> (k, a) -> (k, b) -> (k, c)
 onSecond f (i, x) (_, y) = (i, f x y)
 
 -- | Stepwise computation of a result.
--- The first argument is used to check whether there is an improvement possibility,
--- the second argument improves the current value in the positive case.
--- If no improvement is possible, a finishing step (the third argument) yields the final result.
+-- The first argument is used to compute a possible improvement and
+-- the second argument is the value that is improved as long as possible.
 
-stepwise :: (a -> Maybe b) -> (b -> a -> a) -> (a -> c) -> a -> c
-stepwise try improve finish = fun where
-    fun current = maybe (finish current) fun (fmap (`improve` current) (try current))
+stepwise :: (a -> Maybe a) -> a -> a
+stepwise improve = fun where
+  fun current = maybe current fun (improve current)
+
+-- | Stepwise computation of a result using a binary function.
+-- The first argument computes a possible improvement.
+-- The first argument is applied to the second and third argument as long as the result is not
+-- 'Nothing'.
+
+stepwise2 :: (a -> a -> Maybe (a, a)) -> a -> a -> (a, a)
+stepwise2 = curry . stepwise . uncurry
 
 -- | A non-overloaded version of 'min' that takes an ordering function as an argument
 -- and returns the smaller one. 
