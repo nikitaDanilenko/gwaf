@@ -32,6 +32,7 @@ module Graph.Path (
   stepLeft,
   stepRight,
   verticesPath,
+  pathToArcList,
   pathFromList,
   lengthPath,
   reversePath
@@ -175,6 +176,12 @@ lengthPath = S.length . getPath
 
 verticesPath :: Path vertex -> [vertex]
 verticesPath = toList . getPath
+
+-- | Returns the arcs along a path in their order of traversal.
+
+pathToArcList :: Path vertex -> [(vertex, vertex)]
+pathToArcList path = zip vs (tail vs) where
+  vs = verticesPath path
 
 -- | Creates a path from a list of vertices.
 
