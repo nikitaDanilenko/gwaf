@@ -49,7 +49,7 @@ import Auxiliary.KeyedClasses       ( KeyFunctor, fmapWithKey, KeyMaybeFunctor, 
 import Auxiliary.Mapping            ( Mapping, values, size, toRow, fromRow )
 import Auxiliary.SetOps             ( Intersectable, intersectionWithKey, intersectionWith,
                                       Unionable, unionWith, Complementable, differenceWith,
-                                      differenceWith2, SetOps )
+                                      differenceWith2, SetOps, UnionableHom )
 
 -- | A safe array variant in the sense that queries behave rather as a lookup and not
 -- as a pure indexing operation.
@@ -193,6 +193,8 @@ instance Intersectable SafeArray SafeArray where
 instance Unionable SafeArray SafeArray where
 
   unionWith = zipWithUp
+
+instance UnionableHom SafeArray
 
 -- | The relative complement operation has 
 -- an /O/@('max' ('fullSize' left) ('fullSize' right))@ complexity.
