@@ -152,7 +152,6 @@ withoutSuccessorsVec = toMapping . withoutSuccessorsList
 
 successors :: (Lookup q, MappingV vec) => Graph q vec a -> Vertex -> vec a
 successors = (!!!)
--- same as: successors i g = markWith () [i] .*-- g
 
 -- | Computes the parametrised adjacency of a vertex and applies the supplied function
 -- to every value in the result vector.
