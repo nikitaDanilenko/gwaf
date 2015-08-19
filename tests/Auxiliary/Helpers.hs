@@ -14,6 +14,13 @@ type LabProperty = (String, Property)
 
 type LabProperties = [LabProperty]
 
+-- | Boolean implication.
+
+infixr 1 ==>
+
+(==>) :: Bool -> Bool -> Bool
+a ==> b = not a || b
+
 -- | Creates a test group from labelled properties using 'prop' and sequencing the result.
 
 mkTestGroup :: LabProperties -> Spec
