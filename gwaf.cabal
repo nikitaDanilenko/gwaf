@@ -43,10 +43,11 @@ library
                      Auxiliary.SetOpsInstances,
                      
                      Graph.Graph,
+                     Graph.MaximumMatching,
                      Graph.Path,
                      Graph.Paths,
-                     Graph.Prune
-                       
+                     Graph.Prune,
+                     Graph.VertexCover
   
   -- Modules included in this library but not exported.
   -- other-modules:       
