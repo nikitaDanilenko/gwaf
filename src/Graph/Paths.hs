@@ -20,18 +20,18 @@ module Graph.Paths (
   
   -- * Multiplications
 
+  (.*~°),
   (.*~),
-  (.*~=),
+  (.*~~°),
   (.*~~),
-  (.*~~=),
+  (.*++°),
   (.*++),
-  (.*++=),
+  (.*+++°),
   (.*+++),
-  (.*+++=),
+  (.*#°),
   (.*#),
-  (.*#=),
+  (.*~+°),
   (.*~+),
-  (.*~+=),
 
   -- * Reachability functions
 
@@ -104,59 +104,60 @@ type VPath = Path Vertex
 -- | Path-prolonging multiplication.
 -- This multiplication extends the given path by one step.
 
-(.*~) :: HasHetVMM vec1 q vec2 vec3 => vec1 VPath -> Graph q vec2 a -> vec3 VPath
-(.*~) = vecMatMult2 leftmostUnion (\i p _ -> p `stepRight` i)
+(.*~°) :: HasHetVMM vec1 q vec2 vec3 => vec1 VPath -> Graph q vec2 a -> vec3 VPath
+(.*~°) = vecMatMult2 leftmostUnion (\i p _ -> p `stepRight` i)
 
--- | A homogeneous variant of @('.*~')@.
+-- | A homogeneous variant of @('.*~°')@.
 
-(.*~=) :: HasVMM vec q => vec VPath -> Graph q vec a -> vec VPath
-(.*~=) = (.*~)
+(.*~) :: HasVMM vec q => vec VPath -> Graph q vec a -> vec VPath
+(.*~) = (.*~°)
 
 -- | This multiplication extends all given path by exactly one step.
 
-(.*~~) :: HasHetVMM vec1 q vec2 vec3 => vec1 [VPath] -> Graph q vec2 a -> vec3 [VPath]
-(.*~~) = vecMatMult2 allUnion (\i ps _ -> map (`stepRight` i) ps)
+(.*~~°) :: HasHetVMM vec1 q vec2 vec3 => vec1 [VPath] -> Graph q vec2 a -> vec3 [VPath]
+(.*~~°) = vecMatMult2 allUnion (\i ps _ -> map (`stepRight` i) ps)
 
--- | A homogeneous variant of @('.*~~')@.
+-- | A homogeneous variant of @('.*~~°')@.
 
-(.*~~=) :: HasVMM vec q => vec [VPath] -> Graph q vec a -> vec [VPath]
-(.*~~=) = (.*~~)
+(.*~~) :: HasVMM vec q => vec [VPath] -> Graph q vec a -> vec [VPath]
+(.*~~) = (.*~~°)
 
 -- | Assuming that a vector is labelled with a reachability forest at every index
 -- this multiplication computes the reachability forest that is obtained by walking a single step
 -- through the graph.
 
-(.*++) :: HasHetVMM vec1 q vec2 vec3 => 
+(.*++°) :: HasHetVMM vec1 q vec2 vec3 => 
   vec1 (Forest Vertex) -> Graph q vec2 a -> vec3 (Forest Vertex)
-(.*++) = vecMatMult2 allUnion (\i forest _ -> [Node i forest])
+(.*++°) = vecMatMult2 allUnion (\i forest _ -> [Node i forest])
 
--- | A homogeneous variant of @('.*~~')@.
+-- | A homogeneous variant of @('.*++°')@.
 
-(.*++=) :: HasVMM vec q => vec (Forest Vertex) -> Graph q vec a -> vec (Forest Vertex)
-(.*++=) = (.*++)
+(.*++) :: HasVMM vec q => vec (Forest Vertex) -> Graph q vec a -> vec (Forest Vertex)
+(.*++) = (.*++°)
 
--- | A relative of @('.*++')@ that also collects the values along the edges.
+-- | A relative of @('.*++°')@ that also collects the values along the edges.
 
-(.*+++) :: HasHetVMM vec1 q vec2 vec3 => 
+(.*+++°) :: HasHetVMM vec1 q vec2 vec3 => 
   vec1 (Forest (Arc a)) -> Graph q vec2 a -> vec3 (Forest (Arc a))
-(.*+++) = vecMatMult2 allUnion (\i forest e -> [Node (i, e) forest])
+(.*+++°) = vecMatMult2 allUnion (\i forest e -> [Node (i, e) forest])
 
--- | A homogeneous variant of @('.*+++')@.
+-- | A homogeneous variant of @('.*+++°')@.
 
-(.*+++=) :: HasVMM vec q => vec (Forest (Arc a)) -> Graph q vec a -> vec (Forest (Arc a))
-(.*+++=) = (.*+++)
+(.*+++) :: HasVMM vec q => vec (Forest (Arc a)) -> Graph q vec a -> vec (Forest (Arc a))
+(.*+++) = (.*+++°)
 
 -- | The underlying multiplication of this function is the following one.
 -- It maps every value that is encountered in the adjacency list of a vertex to 1
 -- and then uses numerical addition to add the resulting ones.
 
-(.*#) :: (Num a, HasHetVMM vec1 q vec2 vec3) => vec1 (Number a) -> Graph q vec2 b -> vec3 (Number a)
-(.*#) = vecMatMult2 (bigunionWithE (+)) (\_ _ _ -> 1)
+(.*#°) :: (Num a, HasHetVMM vec1 q vec2 vec3) => 
+  vec1 (Number a) -> Graph q vec2 b -> vec3 (Number a)
+(.*#°) = vecMatMult2 (bigunionWithE (+)) (\_ _ _ -> 1)
 
--- | A homogeneous variant of @('.*#')@.
+-- | A homogeneous variant of @('.*#°')@.
 
-(.*#=) :: (Num a, HasVMM vec q) => vec (Number a) -> Graph q vec b -> vec (Number a)
-(.*#=) = (.*#)
+(.*#) :: (Num a, HasVMM vec q) => vec (Number a) -> Graph q vec b -> vec (Number a)
+(.*#) = (.*#°)
 
 -- | Conceptually this is the vector matrix multiplication in the product semiring
 -- of the semiring of paths and another semiring.
@@ -165,14 +166,14 @@ type VPath = Path Vertex
 -- In the particular case of the tropical semiring,
 -- the sum of all values along the path is precisely the minimum value along the path.
 
-(.*~+) :: (HasHetVMM vec1 q vec2 vec3, SemigroupA asg) => 
+(.*~+°) :: (HasHetVMM vec1 q vec2 vec3, SemigroupA asg) => 
   vec1 (VPath, asg) -> Graph q vec2 asg -> vec3 (VPath, asg)
-(.*~+) = vecMatMult2 leftmostUnion (\i (p, m) y -> (p `stepRight` i, y .+. m))
+(.*~+°) = vecMatMult2 leftmostUnion (\i (p, m) y -> (p `stepRight` i, y .+. m))
 
--- | A homogeneous variant of @('.*~+')@.
+-- | A homogeneous variant of @('.*~+°')@.
 
-(.*~+=) :: (HasVMM vec q, SemigroupA asg) => vec (VPath, asg) -> Graph q vec asg -> vec (VPath, asg)
-(.*~+=) = (.*~+)
+(.*~+) :: (HasVMM vec q, SemigroupA asg) => vec (VPath, asg) -> Graph q vec asg -> vec (VPath, asg)
+(.*~+) = (.*~+°)
 
 -- | A fully parametric reachability scheme.
 -- It takes a vector of initially unvisited vertices,
@@ -612,7 +613,7 @@ shortestDisjointUpToStartEndWithFirstSize start gs =
 reachabilityForest :: 
   (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
   => vec (Forest Vertex) -> [Graph q vec' b] -> q' c -> vec (Forest Vertex)
-reachabilityForest = shortestOneMultiplicationWith (.*++)
+reachabilityForest = shortestOneMultiplicationWith (.*++°)
 
 -- | Similar to 'reachabilityForest', but overwrites all values in the start vector with the empty forest.
 
@@ -626,7 +627,7 @@ reachabilityForestSimple = reachabilityForest . fmap (const [])
 reachabilityForestOneGraph :: 
   (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
   => vec (Forest Vertex) -> Graph q vec' b -> q' c -> vec (Forest Vertex)
-reachabilityForestOneGraph = shortestOneGraphWith (.*++)
+reachabilityForestOneGraph = shortestOneGraphWith (.*++°)
 
 -- | Similar to 'reachabilityForestOneGraph',
 -- but overwrites all values in the start vector with the empty forest.
