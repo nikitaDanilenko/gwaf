@@ -88,7 +88,9 @@ module Algebraic.Matrix (
   symmetricClosureC,
   restrictDomain,
   restrictCodomain,
-  toUnitMatrix
+  toUnitMatrix,
+  partialIdentity,
+  partialIdentityList
 
   ) where
 
