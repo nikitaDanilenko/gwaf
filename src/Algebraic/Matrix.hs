@@ -62,8 +62,11 @@ module Algebraic.Matrix (
   HasVMM,
   (.*),
   (.**),
+  (.*+-°),
   (.*+-),
+  (.*-+°),
   (.*-+),
+  (.*||°),
   (.*||),
   
   -- * Algebraic matrix operations
@@ -369,21 +372,36 @@ allUnion = bigunionWithE (++)
 
 -- | Vector-matrix multiplication that ignores the values in the argument vector.
 
-(.*-+) :: (Intersectable vec1 q, Unionable vec2 vec3, MappingV vec3, Foldable vec1) =>
+(.*-+°) :: (Intersectable vec1 q, Unionable vec2 vec3, MappingV vec3, Foldable vec1) =>
   vec1 a -> Matrix q vec2 b -> vec3 b
-(.*-+) = vecMatMult leftmostUnion (\_ _ e -> e)
+(.*-+°) = vecMatMult leftmostUnion (\_ _ e -> e)
+
+-- | A homogeneous variant of @('.*-+°')@.
+
+(.*-+) :: HasVMM vec q => vec a -> Matrix q vec b -> vec b
+(.*-+) = (.*-+°)
 
 -- | Vector-matrix multiplication that ignores the values in the matrix.
 
-(.*+-) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Matrix q vec2 b -> vec3 a
-(.*+-) = vecMatMult2 leftmostUnion (\_ l _ -> l)
+(.*+-°) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Matrix q vec2 b -> vec3 a
+(.*+-°) = vecMatMult2 leftmostUnion (\_ l _ -> l)
+
+-- | A homogeneous variant of @('.*+-°')@.
+
+(.*+-) :: HasVMM vec q => vec a -> Matrix q vec b -> vec a
+(.*+-) = (.*+-°)
 
 -- | Vector-matrix multiplication that collects all outgoing edges and their
 -- respective labels.
 -- The type is restricted to simplify the application in case of the transposition.
 
+(.*||°) :: HasVMM vec q => vec [Arc a] -> Matrix q vec a -> vec [Arc a]
+(.*||°) = vecMatMult2 allUnion (\i es e -> (i, e) : es)
+
+-- | A homogeneous variant of @('.*||°')@.
+
 (.*||) :: HasVMM vec q => vec [Arc a] -> Matrix q vec a -> vec [Arc a]
-(.*||) = vecMatMult2 allUnion (\i es e -> (i, e) : es)
+(.*||) = (.*||°)
 
 -- Lift a vector-matrix multiplication to the matrix level by successively applying it to
 -- all the rows.
@@ -489,7 +507,7 @@ sMultWithKey op = sMultWithKeys (const <.> op)
 preTranspose :: 
   (HasVMM vec q, Unionable vec o, Mapping i, Functor o) => 
   vec [Arc a] -> o [Arc a] -> Matrix q vec a -> Matrix o i a
-preTranspose vs cols m = Matrix (fmap fromRow (vs .*|| m \\/ cols))
+preTranspose vs cols m = Matrix (fmap fromRow (vs .*||° m \\/ cols))
 
 -- | Transposition of a square matrix.
 -- The requirement @'Unionable' vec q@ suggests that @q@ should be a
