@@ -32,6 +32,8 @@ module Graph.Paths (
   (.*#),
   (.*~+°),
   (.*~+),
+  (.*<-°),
+  (.*<-),
 
   -- * Reachability functions
 
@@ -174,6 +176,17 @@ type VPath = Path Vertex
 
 (.*~+) :: (HasVMM vec q, SemigroupA asg) => vec (VPath, asg) -> Graph q vec asg -> vec (VPath, asg)
 (.*~+) = (.*~+°)
+
+-- | A vector-matrix multiplication that computes the successors and labels each successor
+-- with the first predecessor it has been reached with.
+
+(.*<-°) :: HasHetVMM vec1 q vec2 vec3 => vec1 a -> Graph q vec2 b -> vec3 Vertex
+(.*<-°) = vecMatMult2 leftmostUnion (\i _ _ -> i)
+
+-- | A homogeneous version of @('.*<-°')@.
+
+(.*<-) :: HasVMM vec q => vec a -> Graph q vec b -> vec Vertex
+(.*<-) = (.*<-°)
 
 -- | A fully parametric reachability scheme.
 -- It takes a vector of initially unvisited vertices,
