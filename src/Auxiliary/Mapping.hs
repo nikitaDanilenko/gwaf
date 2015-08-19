@@ -23,7 +23,9 @@ module Auxiliary.Mapping (
     transform,
     toMappingFrom,
     toMappingWith,
+    toMappingAsWith,
     toMapping,
+    toMappingAs,
     fromMapping,
     mkMapping,
 
@@ -128,10 +130,22 @@ toMappingFrom f = fromRow . map (id &&& f)
 toMappingWith :: Mapping m => a -> [Key] -> m a
 toMappingWith = toMappingFrom . const
 
+-- | Creates a new mapping from a key list and a label.
+-- The type of the mapping is given by the first argument, but the actual argument is ignored.
+
+toMappingAsWith :: Mapping m => m b -> a -> [Key] -> m a
+toMappingAsWith _ = toMappingWith
+
 -- | Creates a new mapping from a list of keys labelling every key with '()'.
 
 toMapping :: Mapping m => [Key] -> m ()
 toMapping = toMappingWith ()
+
+-- | Creates a new mapping from a list of keys.
+-- The type of the mapping is given by the first argument, but the actual argument is ignored.
+
+toMappingAs :: Mapping m => m a -> [Key] -> m ()
+toMappingAs _ = toMapping
 
 -- | The same as 'keys'.
 
