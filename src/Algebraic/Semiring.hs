@@ -286,11 +286,18 @@ class (MonoidA s, MonoidM s) => Semiring s
 
 class Semiring s => IdempotentSemiring s
 
--- | In idempotent semirings that also have an 'Eq' instance, 
--- one can define the semiring order in a similar fashion as in a lattice.
--- The idempotence is required for the order to be reflexive.
+-- | In additive semigroups that also have an 'Eq' instance, 
+-- one can define the relation @(.<=.)@ by defining
+-- @a .\<=. b = a .+. b == b@
+-- This relation is always transitive.
+-- Additionally, we have:
+--
+-- * (.\<=.) reflexive @\<===\>@ @('.+.')@ is idempotent.
+-- * (.\<=.) antisymmetric @\<===@ @('.+.') is commutative.
 
-(.<=.) :: (IdempotentSemiring s, Eq s) => s -> s -> Bool
+infixr 2 .<=.
+
+(.<=.) :: (SemigroupA asg, Eq asg) => asg -> asg -> Bool
 s .<=. t = s .+. t == t
 
 -- | A type class for semirings in which the constants can be distinguished from other elements.
