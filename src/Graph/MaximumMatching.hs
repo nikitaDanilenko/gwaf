@@ -7,7 +7,7 @@
 -- Stability   :  experimental
 -- Portability :  portable
 -- 
--- This module provides functions for the computations of maximum matchings.
+-- This module provides functions for the computations of maximum matchings in bipartite graphs.
 
 module Graph.MaximumMatching (
 
@@ -29,8 +29,8 @@ import Auxiliary.SetOps  ( Intersectable, Complementable, Unionable, SetOps, sym
 import Graph.Graph       ( Graph, withoutSuccessorsVec, withoutSuccessorsOuter, emptyGraph2,
 	                         pathToSymGraph, numberOfVertices )
 import Graph.Path        ( emptyPath, stepRight )
-import Graph.Paths       ( VPath, shortestOneMultiplicationWith, (.*~=), shortestDisjointWithSize,
-                           (.*++=) )
+import Graph.Paths       ( VPath, shortestOneMultiplicationWith, (.*~), shortestDisjointWithSize,
+                           (.*++) )
 
 -- | Applies the symmetric difference with the first argument in both components of the
 -- second argument.
@@ -49,7 +49,7 @@ augmentingPath ::
 		-> Graph q vec a 
 		-> Maybe VPath
 augmentingPath m cm = fmap (uncurry (flip stepRight)) (some result) where
-  result = shortestOneMultiplicationWith (.*~=) (fmap (const emptyPath) u .*~= cm) [m, cm] u'
+  result = shortestOneMultiplicationWith (.*~) (fmap (const emptyPath) u .*~ cm) [m, cm] u'
   u      = withoutSuccessorsVec m
   u'     = withoutSuccessorsOuter m -- outer type for more efficient intersections.
 
@@ -97,7 +97,7 @@ augmentingPaths ::
 		-> Graph q vec a 
 		-> Graph q vec a 
 		-> [VPath]
-augmentingPaths n m cm = shortestDisjointWithSize n (u .*++= cm) [m, cm] u where
+augmentingPaths n m cm = shortestDisjointWithSize n (u .*++ cm) [m, cm] u where
   u      = fmap (const []) (withoutSuccessorsVec m)
   u'     = withoutSuccessorsOuter m -- outer type for more efficient intersections.
 
