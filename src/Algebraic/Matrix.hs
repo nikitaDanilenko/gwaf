@@ -110,7 +110,7 @@ import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
-                                      insertWith, toMappingWith, mkMapping, toMapping )
+                                      insertWith, mkMapping, toMapping )
 import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
