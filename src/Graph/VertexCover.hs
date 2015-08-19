@@ -13,6 +13,9 @@
 
 module Graph.VertexCover (
 
+	minimumVertexCover,
+	minimumVertexCoverApprox
+
   ) where
 
 import Data.Traversable      ( Traversable )
