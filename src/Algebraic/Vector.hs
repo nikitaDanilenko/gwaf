@@ -44,7 +44,8 @@ module Algebraic.Vector (
 
   maxIndicesWithMax,
   maxIndices,
-  maxVector
+  maxVector,
+  restrictToMax
 
   ) where
 
@@ -150,9 +151,14 @@ maxIndicesWithMax v = (ffilter (m ==) v, m)
 -- | Returns those keys in the vector that have maximum values.
 
 maxIndices :: (Mapping vec, Num n, Ord n) => vec (Number n) -> [Key]
-maxIndices = keys . fst . maxIndicesWithMax
+maxIndices = keys . restrictToMax
 
 -- | Returns the maximum value in the vector.
 
 maxVector :: (Mapping vec, Num n, Ord n) => vec (Number n) -> Number n
 maxVector = snd . maxIndicesWithMax
+
+-- | Restricts the given vector to those keys that have maximum values.
+
+restrictToMax :: (Mapping vec, Num n, Ord n) => vec (Number n) -> vec (Number n)
+restrictToMax = fst . maxIndicesWithMax
