@@ -109,21 +109,21 @@ types = ["Bool", "Tropical (Number Integer)", "Bool x Tropical (Number Rational)
 
 spec :: Spec
 spec = mkSuite $
-    zip [unwords ["Matrix", o, i, t] | (o, i) <- combinations, t <- types, i /= "SafeArray"]
-        [
-          propsClosure (Proxy :: Proxy (Matrix AList AList Bool)),
-          propsClosure (Proxy :: Proxy (Matrix AList AList (Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix AList AList (Bool, Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix IntMap AList Bool)),
-          propsClosure (Proxy :: Proxy (Matrix IntMap AList (Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix IntMap AList (Bool, Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix IntMap IntMap Bool)),
-          propsClosure (Proxy :: Proxy (Matrix IntMap IntMap (Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix IntMap IntMap (Bool, Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray AList Bool)),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray AList (Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray AList (Bool, Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap Bool)),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap (Tropical (Number Integer)))),
-          propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap (Bool, Tropical (Number Integer))))
-        ]
+  zip [unwords ["Closure: Matrix", o, i, t] | (o, i) <- combinations, t <- types]
+      [
+        propsClosure (Proxy :: Proxy (Matrix AList AList Bool)),
+        propsClosure (Proxy :: Proxy (Matrix AList AList (Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix AList AList (Bool, Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix IntMap AList Bool)),
+        propsClosure (Proxy :: Proxy (Matrix IntMap AList (Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix IntMap AList (Bool, Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix IntMap IntMap Bool)),
+        propsClosure (Proxy :: Proxy (Matrix IntMap IntMap (Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix IntMap IntMap (Bool, Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray AList Bool)),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray AList (Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray AList (Bool, Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap Bool)),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap (Tropical (Number Integer)))),
+        propsClosure (Proxy :: Proxy (Matrix SafeArray IntMap (Bool, Tropical (Number Integer))))
+      ]
