@@ -319,7 +319,7 @@ class (Semiring s, FindZero s, FindOne s) => SemiringC s
 -- satisfies certain properties listed below.
 -- We use the definition (and equivalent characterisation) presented in
 --   
--- * Dexter Kozen, "A Completeness Theorem for Kleene Algebras and the Algebra of regular events",
+-- * Dexter Kozen, \"A Completeness Theorem for Kleene Algebras and the Algebra of regular events\",
 --   Information and Computation 110:2 (1994) pp. 366-390,
 --   <www.cs.cornell.edu/~kozen/papers/ka.pdf available here>.
 --   
