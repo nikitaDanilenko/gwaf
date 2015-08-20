@@ -43,6 +43,10 @@ module Auxiliary.General (
     evens,
     odds,
     evensOdds,
+    subsets,
+    powerlistFrom,
+    powerlist,
+    emptyOrContained,
 
     -- ** Union functions
 
@@ -86,7 +90,10 @@ module Auxiliary.General (
     ) where
 
 import Control.Arrow   ( (&&&) )
+import Data.Foldable   ( toList )
+import Data.List       ( genericIndex )
 import Data.Ord        ( comparing )
+import Data.Sequence   ( Seq, (|>), empty )
 import Test.QuickCheck ( Arbitrary, Gen, sized, choose, suchThat, arbitrary ) 
 
 -- | 
@@ -393,6 +400,43 @@ odds _            = []
 
 evensOdds :: [a] -> ([a], [a])
 evensOdds = evens &&& odds
+
+-- | Shorthand for double indexing.
+
+subsetsOfSize :: Integer -> Integer -> [Seq Integer]
+subsetsOfSize n k = allSubsets `genericIndex` n `genericIndex` k
+
+-- | A list containing all lists of sublists (as sequences) of [0 .. n - 1] for every n.
+
+allSubsets :: [[[Seq Integer]]]
+allSubsets = [[subsets n k | k <- [0 .. ]] | n <- [0 .. ]]
+
+-- | Computes the list of sublists (sequences) of @[0 .. n - 1]@ with length @k@,
+-- where @n@ is the first argument and @k@ is the second one.
+
+subsets :: Integer -> Integer -> [Seq Integer]
+subsets n k
+    | n < 0 || n < k || k < 0 = []
+    | k == 0                  = [empty]
+    | otherwise               =    subsetsOfSize (n - 1) k 
+                                ++ map (|> (n - 1)) (subsetsOfSize (n - 1) (k - 1))
+
+-- | Returns the powerlist of @[0 .. n - 1]@, such that the elements are sorted with
+-- respect to their length.
+
+powerlist :: Integer -> [[Integer]]
+powerlist = powerlistFrom 0
+
+-- | Returns the powerlist of @[0 .. n - 1]@ starting with sublists with length @k@,
+-- where /n/ is the first argument and /k/ is the second one.
+
+powerlistFrom :: Integer -> Integer -> [[Integer]]
+powerlistFrom n k = map toList (concatMap (subsetsOfSize n) [k .. n])
+
+-- | Checks whether the given element is contained in the given list, if the list is non-empty.
+
+emptyOrContained :: Eq a => a -> [a] -> Bool
+emptyOrContained x xs = null xs || x `elem` xs
 
 -- | A ternary function that ignores its first two arguments and returns the third one.
 
