@@ -403,18 +403,18 @@ evensOdds = evens &&& odds
 
 -- | Shorthand for double indexing.
 
-subsetsOfSize :: Integer -> Integer -> [Seq Integer]
+subsetsOfSize :: Integral i => i -> i -> [Seq i]
 subsetsOfSize n k = allSubsets `genericIndex` n `genericIndex` k
 
 -- | A list containing all lists of sublists (as sequences) of [0 .. n - 1] for every n.
 
-allSubsets :: [[[Seq Integer]]]
+allSubsets :: Integral i => [[[Seq i]]]
 allSubsets = [[subsets n k | k <- [0 .. ]] | n <- [0 .. ]]
 
 -- | Computes the list of sublists (sequences) of @[0 .. n - 1]@ with length @k@,
 -- where @n@ is the first argument and @k@ is the second one.
 
-subsets :: Integer -> Integer -> [Seq Integer]
+subsets :: Integral i => i -> i -> [Seq i]
 subsets n k
     | n < 0 || n < k || k < 0 = []
     | k == 0                  = [empty]
@@ -424,13 +424,13 @@ subsets n k
 -- | Returns the powerlist of @[0 .. n - 1]@, such that the elements are sorted with
 -- respect to their length.
 
-powerlist :: Integer -> [[Integer]]
+powerlist :: Integral i => i -> [[i]]
 powerlist = powerlistFrom 0
 
 -- | Returns the powerlist of @[0 .. n - 1]@ starting with sublists with length @k@,
 -- where /n/ is the first argument and /k/ is the second one.
 
-powerlistFrom :: Integer -> Integer -> [[Integer]]
+powerlistFrom :: Integral i => i -> i -> [[i]]
 powerlistFrom n k = map toList (concatMap (subsetsOfSize n) [k .. n])
 
 -- | Checks whether the given element is contained in the given list, if the list is non-empty.
