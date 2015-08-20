@@ -13,16 +13,15 @@
 
 module Graph.PathSpec where
 
-import Control.Arrow         ( (***) )
-import Test.Hspec            ( Spec )
-import Test.QuickCheck       ( Arbitrary, property )
+import Control.Arrow     ( (***) )
+import Test.Hspec        ( Spec )
+import Test.QuickCheck   ( Arbitrary, property )
 
-import Auxiliary.General     ( evensOdds )
-import Auxiliary.Helpers     ( LabProperties, Proxy ( Proxy ), mkSuite )
-import Graph.Path            ( Path, LabelledPath, lengthLabelled, labelledPathToPair,
-                               labelledPathFrom, labels, verticesLabelled, toEitherList,
-                               verticesPath, pathFromList, stepRight, emptyPath, stepLeft,
-                               reversePath )
+import Auxiliary.General ( evensOdds )
+import Graph.Path        ( Path, LabelledPath, lengthLabelled, labelledPathToPair,
+                           labelledPathFrom, labels, verticesLabelled, toEitherList,
+                           verticesPath, pathFromList, stepRight, emptyPath, stepLeft, reversePath )
+import Helpers           ( LabProperties, Proxy ( Proxy ), mkSuite )
 
 -- | Tests whether labelled paths are non-empty.
 

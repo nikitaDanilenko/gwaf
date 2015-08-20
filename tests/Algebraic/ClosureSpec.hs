@@ -21,11 +21,11 @@ import Algebraic.Closure         ( starClosureIC, starClosureOC )
 import Algebraic.Matrix          ( Matrix, identityMatrix, (.**.), HasVMM, removeZeroesMatrix )
 import Algebraic.Semiring        ( KleeneAlgebraC, Tropical, Number, (.+.), (.<=.) )
 import Auxiliary.AList           ( AList )
-import Auxiliary.Helpers         ( mkSuite, LabProperties, (==>), Proxy ( Proxy ) )
 import Auxiliary.IntMapArbitrary ()
 import Auxiliary.Mapping         ( Mapping, MappingV )
 import Auxiliary.SafeArray       ( SafeArray )
 import Auxiliary.SetOps          ( UnionableHom )
+import Helpers                   ( mkSuite, LabProperties, (===>), Proxy ( Proxy ) )
 
 -- | A polymorphic test that checks whether
 -- @'one' '.+.' 'plus' a == 'plus' ('one' '.+.' a)@ holds for matrices.
@@ -61,14 +61,14 @@ isRightFixpoint m = identityMatrix m' .+. m' .**. starM == starM where
 isLeftClosed ::
 	(HasVMM i o, UnionableHom i, UnionableHom o, Mapping o, KleeneAlgebraC kac, Eq kac) => 
 		Matrix o i kac -> Matrix o i kac -> Bool
-isLeftClosed a b = (a .**. b .<=. b) ==> (starClosureOC a .**. b .<=. b)
+isLeftClosed a b = (a .**. b .<=. b) ===> (starClosureOC a .**. b .<=. b)
 
 -- | Checks whether @b '.*.' a '.<=-' b@ implies @b '.**.' 'starClosureOC' a '.<=.' b
 
 isRightClosed :: 
 	(HasVMM i o, UnionableHom i, UnionableHom o, Mapping o, KleeneAlgebraC kac, Eq kac) => 
 		Matrix o i kac -> Matrix o i kac -> Bool
-isRightClosed a b = (b .**. a .<=. b) ==> (b .**. starClosureOC a .<=. b)
+isRightClosed a b = (b .**. a .<=. b) ===> (b .**. starClosureOC a .<=. b)
 
 -- | List of tested laws.
 
@@ -91,8 +91,8 @@ laws = [
 	"plus (1 + a) = 1 + (plus a)",
 	"1 + star a * a = star a",
 	"1 + a * star a = star a",
-	"a * b <= b ==> star a * b <= b",
-	"b * a <= b ==> b * star a <= b"
+	"a * b <= b ===> star a * b <= b",
+	"b * a <= b ===> b * star a <= b"
 	]
 
 -- | A list of structure combinations the laws are tested for.

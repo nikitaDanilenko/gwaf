@@ -20,13 +20,14 @@ import Test.QuickCheck           ( Arbitrary, property )
 
 import Auxiliary.AList           ( AList )
 import Auxiliary.General         ( Key )
-import Auxiliary.Helpers         ( LabProperties, Proxy ( Proxy ), mkSuite )
 import Auxiliary.KeyedClasses    ( clookup )
 import Auxiliary.IntMapArbitrary ()
 import Auxiliary.Mapping         ( Mapping, fromRow, toRow, keys, values, size,
                                    MappingV, isEmpty, empty, insert, insertWith,
                                    singleton, fromRow, delete )
 import Auxiliary.SafeArray       ( SafeArray )
+import Helpers                   ( LabProperties, Proxy ( Proxy ), mkSuite )
+
 
 -- | Tests the law @'fromRow' . 'toRow' = 'id'@.
 
@@ -37,7 +38,6 @@ prop_fromRowToRow m = fromRow (toRow m) == m
 
 prop_sizeLengthToRow :: Mapping m => m a -> Bool
 prop_sizeLengthToRow m = size m == length (toRow m)
-
 
 -- | Tests the rule @'keys' = 'map' 'fst' . 'toRow'@.
 
@@ -153,7 +153,7 @@ types = ["Integer", "(Double, String)", "[Bool]"]
 
 spec :: Spec
 spec = mkSuite $
-    zip [unwords [s, t] | s <- structures, t <- types]
+    zip [unwords ["Mapping:", s, t] | s <- structures, t <- types]
         [
           propsMapping (Proxy :: Proxy (AList Integer)),
           propsMapping (Proxy :: Proxy (AList (Double, String))),
