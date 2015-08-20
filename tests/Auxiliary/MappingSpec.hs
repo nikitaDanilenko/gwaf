@@ -166,7 +166,7 @@ spec = mkSuite $
           propsMapping (Proxy :: Proxy (SafeArray [Bool]))
         ]
   ++
-    zip [unwords [s, t] | s <- structures, t <- types, s /= "SafeArray"]
+    zip [unwords ["MappingV:", s, t] | s <- structures, t <- types, s /= "SafeArray"]
         [
           propsMappingV (Proxy :: Proxy (AList Integer)),
           propsMappingV (Proxy :: Proxy (AList (Double, String))),
