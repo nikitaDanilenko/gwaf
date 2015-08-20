@@ -53,11 +53,11 @@ prop_valuesMapSndToRow m = values m == map snd (toRow m)
 
 propsMapping :: forall m a . (Mapping m, Eq (m a), Eq a, Arbitrary (m a), Show (m a)) => 
   Proxy (m a) -> LabProperties
-propsMapping _ = zip lawsMapping
-  [ property (prop_fromRowToRow      :: m a -> Bool),
-    property (prop_sizeLengthToRow   :: m a -> Bool),
-    property (prop_keysMapFstToRow   :: m a -> Bool),
-    property (prop_valuesMapSndToRow :: m a -> Bool)]
+propsMapping _ = zip lawsMapping (map property
+  [ prop_fromRowToRow      :: m a -> Bool,
+    prop_sizeLengthToRow   :: m a -> Bool,
+    prop_keysMapFstToRow   :: m a -> Bool,
+    prop_valuesMapSndToRow :: m a -> Bool])
 
 -- | Tests the law that 'isEmpty' returns 'True' if and only if the mapping is equal to 'empty'.
 
