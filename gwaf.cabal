@@ -42,6 +42,8 @@ library
                      Auxiliary.SetOps, 
                      Auxiliary.SetOpsInstances,
                      
+                     Graph.ApprovalVoting,
+                     Graph.Bipartite,
                      Graph.Graph,
                      Graph.MaximumMatching,
                      Graph.MaximumFlow,
