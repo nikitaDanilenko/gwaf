@@ -1017,3 +1017,6 @@ instance KleeneAlgebraC Bool
 instance (Ord t, MonoidA t) => KleeneAlgebraC (Tropical t)
 instance KleeneAlgebraC (Regular r)
 instance (KleeneAlgebraC k, KleeneAlgebraC k') => KleeneAlgebraC (k, k')
+
+instance Arbitrary a => Arbitrary (First a) where
+  arbitrary = fmap First arbitrary
