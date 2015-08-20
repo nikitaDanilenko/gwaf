@@ -21,6 +21,13 @@ infixr 1 ===>
 (===>) :: Bool -> Bool -> Bool
 a ===> b = not a || b
 
+-- | Function equality as a function.
+
+infixr 3 ===
+
+(===) :: Eq b => (a -> b) -> (a -> b) -> a -> Bool
+(===) f g x = f x == g x
+
 -- | Creates a test group from labelled properties using 'prop' and sequencing the result.
 
 mkTestGroup :: LabProperties -> Spec
