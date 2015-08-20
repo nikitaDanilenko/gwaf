@@ -1,6 +1,6 @@
 {-# Language ScopedTypeVariables #-}
 
-module Auxiliary.Helpers where
+module Helpers where
 
 import Test.QuickCheck       (  Property )
 import Test.Hspec            ( Spec, describe, context )
@@ -16,10 +16,10 @@ type LabProperties = [LabProperty]
 
 -- | Boolean implication.
 
-infixr 1 ==>
+infixr 1 ===>
 
-(==>) :: Bool -> Bool -> Bool
-a ==> b = not a || b
+(===>) :: Bool -> Bool -> Bool
+a ===> b = not a || b
 
 -- | Creates a test group from labelled properties using 'prop' and sequencing the result.
 
