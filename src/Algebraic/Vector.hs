@@ -38,7 +38,13 @@ module Algebraic.Vector (
   (*>),
   unitVector,
   unitVector2,
-  vectorSum
+  vectorSum,
+
+  -- * Maximum functions
+
+  maxIndicesWithMax,
+  maxIndices,
+  maxVector
 
   ) where
 
@@ -47,10 +53,10 @@ import qualified Data.Foldable as F ( foldr )
 
 import Algebraic.Semiring           ( SemigroupA, MonoidA, (.+.), zero, MonoidM, (.*.),
                                       one, GroupA, inverseA, FindZero, isZero, isNotZero, FindOne,
-                                      isOne )
+                                      isOne, Number )
 import Auxiliary.General            ( Key, (<.>), scaleLeft )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyMaybeFunctor, ffilter )
-import Auxiliary.Mapping            ( Mapping, singleton, MappingV, empty )
+import Auxiliary.Mapping            ( Mapping, singleton, MappingV, empty, keys, values )
 import Auxiliary.SetOps             ( UnionableHom, unionWith )
 
 -- | A safe version of a lookup operation, because non-existent values
@@ -132,3 +138,21 @@ unitVector2 x = singleton x ()
 
 vectorSum :: (Foldable v, MonoidA am) => v am -> am
 vectorSum = F.foldr (.+.) zero
+
+-- | Restricts the given vector to those indices that have maximum values and returns a pair
+-- consisting of this vector and the maximum value.
+-- If the vector is empty, the maximum is 0.
+
+maxIndicesWithMax :: (Mapping vec, Num n, Ord n) => vec (Number n) -> (vec (Number n), Number n)
+maxIndicesWithMax v = (ffilter (m ==) v, m)
+  where m = foldr max 0 (values v)
+
+-- | Returns those keys in the vector that have maximum values.
+
+maxIndices :: (Mapping vec, Num n, Ord n) => vec (Number n) -> [Key]
+maxIndices = keys . fst . maxIndicesWithMax
+
+-- | Returns the maximum value in the vector.
+
+maxVector :: (Mapping vec, Num n, Ord n) => vec (Number n) -> Number n
+maxVector = snd . maxIndicesWithMax
