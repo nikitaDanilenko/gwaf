@@ -927,10 +927,6 @@ instance Semiring (Regular r)
 
 instance Semiring s => Semiring (ZipList s)
 
--- | The semiring in which the addition is the choice of the first non-'Nothing' element.
-
-instance MonoidM m => Semiring (First m)
-
 -- | The product semiring.
 
 instance (Semiring s, Semiring s') => Semiring (s, s')
@@ -944,7 +940,6 @@ instance SemiringC Bool
 instance (Num n, Eq n) => SemiringC (Number n)
 instance (Ord t, MonoidA t) => SemiringC (Tropical t)
 instance SemiringC (Regular r)
-instance (MonoidM m, FindOne m) => SemiringC (First m)
 instance (SemiringC s, SemiringC s') => SemiringC (s, s')
 
 instance IdempotentSemiring ()
@@ -956,7 +951,6 @@ instance (Ord t, MonoidA t) => IdempotentSemiring (Tropical t)
 instance IdempotentSemiring (Regular r)
 
 instance IdempotentSemiring s => IdempotentSemiring (ZipList s)
-instance MonoidM m => IdempotentSemiring (First m)
 instance (IdempotentSemiring s, IdempotentSemiring s') => IdempotentSemiring (s, s')
 instance IdempotentSemiring s => IdempotentSemiring (x -> s)
 
