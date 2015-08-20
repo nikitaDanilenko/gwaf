@@ -152,13 +152,13 @@ type VPath = Path Vertex
 -- It maps every value that is encountered in the adjacency list of a vertex to 1
 -- and then uses numerical addition to add the resulting ones.
 
-(.*#°) :: (Num a, HasHetVMM vec1 q vec2 vec3) => 
-  vec1 (Number a) -> Graph q vec2 b -> vec3 (Number a)
+(.*#°) :: (Num n, HasHetVMM vec1 q vec2 vec3) => 
+  vec1 a -> Graph q vec2 b -> vec3 (Number n)
 (.*#°) = vecMatMult2 (bigunionWithE (+)) (\_ _ _ -> 1)
 
 -- | A homogeneous variant of @('.*#°')@.
 
-(.*#) :: (Num a, HasVMM vec q) => vec (Number a) -> Graph q vec b -> vec (Number a)
+(.*#) :: (Num n, HasVMM vec q) => vec a -> Graph q vec b -> vec (Number n)
 (.*#) = (.*#°)
 
 -- | Conceptually this is the vector matrix multiplication in the product semiring
