@@ -118,7 +118,7 @@ class SemigroupA a where
 --    @'msum' = 'foldr' ('.+.') 'zero'@
 -- 
 -- [/mtimes/]
---    @'mtimes' n x = 'msum' ('genericReplicate' n x)@
+--    @n >= 0 ==> 'mtimes' n x = 'msum' ('genericReplicate' n x)@
 
 class SemigroupA a => MonoidA a where
     {-# Minimal zero | msum #-}
@@ -176,7 +176,7 @@ class SemigroupM m where
 --    @'product' = 'foldr' ('.*.') 'one'@
 -- 
 -- [/power/]
---    @x '.^.' y = 'mproduct' ('genericReplicate' n x)@
+--    @y >= 0 ==> x '.^.' y = 'mproduct' ('genericReplicate' n x)@
 
 class SemigroupM m => MonoidM m where
 
