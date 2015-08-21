@@ -11,6 +11,7 @@
 
 module Graph.MaximumFlow (
 
+	Network ( .. ),
 	maximumFlowBoth,
 	maximumFlow,
 	minimumCut,
