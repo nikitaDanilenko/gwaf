@@ -29,6 +29,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:   Algebraic.Closure,
                      Algebraic.Matrix,
+                     Algebraic.PathAlgebra,
                      Algebraic.Semiring, 
                      Algebraic.Vector,
 
