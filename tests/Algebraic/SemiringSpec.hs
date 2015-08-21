@@ -13,19 +13,20 @@
 
 module Algebraic.SemiringSpec ( spec ) where
 
-import Data.List           ( genericReplicate )
+import Data.List             ( genericReplicate )
 
-import Data.Monoid         ( First )
-import Test.Hspec          ( Spec )
-import Test.QuickCheck     ( Arbitrary, property )
+import Data.Monoid           ( First )
+import Test.Hspec            ( Spec )
+import Test.QuickCheck       ( Arbitrary, property )
 
-import Algebraic.Semiring  ( SemigroupA, (.+.), MonoidA, zero, msum, mtimes,
-                             FindZero, isZero, isNotZero, GroupA, (.-.), inverseA,
-	                           SemigroupM, (.*.), MonoidM, one, mproduct, (.^.),
-                             FindOne, isOne, isNotOne,
-                             Semiring, IdempotentSemiring, (.<=.), KleeneAlgebra, star, plus,
-                             Tropical, Number )
-import Helpers             ( (===), (===>), mkSuite, Proxy ( Proxy ), LabProperties )
+import Algebraic.Semiring    ( SemigroupA, (.+.), MonoidA, zero, msum, mtimes,
+                               FindZero, isZero, isNotZero, GroupA, (.-.), inverseA,
+	                             SemigroupM, (.*.), MonoidM, one, mproduct, (.^.),
+                               FindOne, isOne, isNotOne,
+                               Semiring, IdempotentSemiring, (.<=.), KleeneAlgebra, star, plus,
+                               Tropical, Number )
+import Algebraic.PathAlgebra ( Balanced, Clustered )
+import Helpers              -- ( (===), (===>), mkSuite, Proxy ( Proxy ), LabProperties, testPure, Pure, NamedProxy, tester )
 
 -- | Is the given operation associative?
 
@@ -45,7 +46,7 @@ isFolded folded op e = folded === foldr op e
 -- | Is the first argument expressible in terms of the second one?
 
 isNtimes :: (Eq a, Integral i) => (i -> a -> a) -> ([a] -> a) -> i -> a -> Bool
-isNtimes times folded n x = times n x == folded (genericReplicate n x)
+isNtimes times folded n x = n >= 0 ===> (times n x == folded (genericReplicate n x))
 
 -- | Are the given predicates complementary?
 
@@ -309,7 +310,7 @@ propsKleeneAlgebra _ = zip
 amTypes :: [String]
 amTypes = ["Bool", "Number Integer", "Number Rational", "Tropical (Number Integer)", 
            "Tropical (Number Rational)", "(Bool, Tropical (Number Integer))", 
-           "First (Number Integer)"]
+           "First (Number Integer)", "Balanced", "Clustered"]
 
 -- | Types for additive monoids with constants.
 
@@ -326,7 +327,7 @@ agTypes = ["Number Integer, (Number Integer, Number Rational)"]
 mmTypes :: [String]
 mmTypes = ["Bool", "Number Integer", "Number Rational", "Tropical (Number Integer)", 
          "Tropical (Number Rational)", "(Bool, Tropical (Number Integer))", 
-         "First (Number Integer)", "[Bool]"]
+         "First (Number Integer)", "[Bool]", "Balanced", "Clustered"]
 
 -- | Types for multiplicative monoids with constants.
 
@@ -341,12 +342,14 @@ srTypes = amTypes
 -- | Types for idempotent semirings.
 
 isrTypes :: [String]
-isrTypes = ["Bool", "Tropical (Number Integer)", "(Bool, Tropical (Number Integer))", "First"]
+isrTypes = ["Bool", "Tropical (Number Integer)", "(Bool, Tropical (Number Integer))", "First",
+            "Balanced", "Clustered"]
 
 -- | Types for Kleene algebras.
 
 kaTypes :: [String]
-kaTypes = ["Bool", "Tropical (Number Integer)", "(Bool, Tropical (Number Integer))"]
+kaTypes = ["Bool", "Tropical (Number Integer)", "(Bool, Tropical (Number Integer))", 
+           "Balanced", "Clustered"]
 
 spec :: Spec
 spec = mkSuite $ concat [
@@ -358,7 +361,9 @@ spec = mkSuite $ concat [
 			 	propsMonoidA (Proxy :: Proxy (Tropical (Number Integer))),
 			 	propsMonoidA (Proxy :: Proxy (Tropical (Number Rational))),
 			 	propsMonoidA (Proxy :: Proxy (Bool, Tropical (Number Integer))),
-			 	propsMonoidA (Proxy :: Proxy (First (Number Integer)))
+			 	propsMonoidA (Proxy :: Proxy (First (Number Integer))),
+			 	propsMonoidA (Proxy :: Proxy Balanced),
+			 	propsMonoidA (Proxy :: Proxy Clustered)
 			]
   ,
   zip (map ("Additive monoid with constants: " ++) amcTypes)
@@ -369,7 +374,9 @@ spec = mkSuite $ concat [
 			 	propsMonoidAC (Proxy :: Proxy (Tropical (Number Integer))),
 			 	propsMonoidAC (Proxy :: Proxy (Tropical (Number Rational))),
 			 	propsMonoidAC (Proxy :: Proxy (Bool, Tropical (Number Integer))),
-			 	propsMonoidAC (Proxy :: Proxy (First (Number Integer)))
+			 	propsMonoidAC (Proxy :: Proxy (First (Number Integer))),
+			 	propsMonoidAC (Proxy :: Proxy Balanced),
+			 	propsMonoidAC (Proxy :: Proxy Clustered)
 			]
   ,
   zip (map ("Additive group: " ++) agTypes)
@@ -387,7 +394,9 @@ spec = mkSuite $ concat [
 			 	propsMonoidM (Proxy :: Proxy (Tropical (Number Rational))),
 			 	propsMonoidM (Proxy :: Proxy (Bool, Tropical (Number Integer))),
 			 	propsMonoidM (Proxy :: Proxy (First (Number Integer))),
-			  propsMonoidM (Proxy :: Proxy [Bool])
+			  propsMonoidM (Proxy :: Proxy [Bool]),
+			  propsMonoidM (Proxy :: Proxy Balanced),
+			  propsMonoidM (Proxy :: Proxy Clustered)
 			]
 	,
 	zip (map ("Multiplicative monoid with constants: " ++) mmcTypes)
@@ -399,7 +408,9 @@ spec = mkSuite $ concat [
 			 	propsMonoidMC (Proxy :: Proxy (Tropical (Number Rational))),
 			 	propsMonoidMC (Proxy :: Proxy (Bool, Tropical (Number Integer))),
 			 	propsMonoidMC (Proxy :: Proxy (First (Number Integer))),
-			  propsMonoidMC (Proxy :: Proxy [Bool])
+			  propsMonoidMC (Proxy :: Proxy [Bool]),
+			  propsMonoidMC (Proxy :: Proxy Balanced),
+			  propsMonoidMC (Proxy :: Proxy Clustered)
 			]
   ,
   zip (map ("Semiring: " ++) srTypes)
@@ -409,20 +420,26 @@ spec = mkSuite $ concat [
 			 	propsSemiring (Proxy :: Proxy (Number Rational)),
 			 	propsSemiring (Proxy :: Proxy (Tropical (Number Integer))),
 			 	propsSemiring (Proxy :: Proxy (Tropical (Number Rational))),
-			 	propsSemiring (Proxy :: Proxy (Bool, Tropical (Number Integer)))
+			 	propsSemiring (Proxy :: Proxy (Bool, Tropical (Number Integer))),
+			 	propsSemiring (Proxy :: Proxy Balanced),
+			 	propsSemiring (Proxy :: Proxy Clustered)
 			]
 	,
 	zip (map ("Idempotent semiring: " ++) isrTypes)
 	    [
 	    	propsIdempotentSemiring (Proxy :: Proxy Bool),
 			 	propsIdempotentSemiring (Proxy :: Proxy (Tropical (Number Integer))),
-			 	propsIdempotentSemiring (Proxy :: Proxy (Tropical (Number Rational)))
+			 	propsIdempotentSemiring (Proxy :: Proxy (Tropical (Number Rational))),
+			 	propsIdempotentSemiring (Proxy :: Proxy Balanced),
+			 	propsIdempotentSemiring (Proxy :: Proxy Clustered)
 			]
 	,
 	zip (map ("KleeneAlgebra: " ++) kaTypes)
 			[
 	    	propsKleeneAlgebra (Proxy :: Proxy Bool),
 			 	propsKleeneAlgebra (Proxy :: Proxy (Tropical (Number Integer))),
-			 	propsKleeneAlgebra (Proxy :: Proxy (Bool, Tropical (Number Integer)))
+			 	propsKleeneAlgebra (Proxy :: Proxy (Bool, Tropical (Number Integer))),
+			 	propsKleeneAlgebra (Proxy :: Proxy Balanced),
+			 	propsKleeneAlgebra (Proxy :: Proxy Clustered)
 			]
 	]
