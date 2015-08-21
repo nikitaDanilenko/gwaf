@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Auxiliary.Closure
+-- Module      :  Graph.Path
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  BSD3
 -- Maintainer  :  nikita.danilenko.is@gmail.com

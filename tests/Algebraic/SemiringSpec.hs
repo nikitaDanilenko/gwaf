@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Auxiliary.MappingSpec
+-- Module      :  Algebraic.SemiringSpec
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  BSD3
 -- Maintainer  :  nikita.danilenko.is@gmail.com

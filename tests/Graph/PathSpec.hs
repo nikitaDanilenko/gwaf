@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Auxiliary.PathSpec
+-- Module      :  Graph.PathSpec
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  GPL Version 3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
