@@ -43,6 +43,7 @@ module Auxiliary.General (
     evens,
     odds,
     evensOdds,
+    allValues,
     subsets,
     powerlistFrom,
     powerlist,
@@ -400,6 +401,11 @@ odds _            = []
 
 evensOdds :: [a] -> ([a], [a])
 evensOdds = evens &&& odds
+
+-- | Lists all values of an enumerable, bounded type.
+
+allValues :: (Enum a, Bounded a) => [a]
+allValues = [minBound .. maxBound]
 
 -- | Shorthand for double indexing.
 
