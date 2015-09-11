@@ -61,6 +61,8 @@ module Algebraic.Semiring (
     tropicalToNumber,
     numberToTropical,
     safeNumberToTropical,
+    addTropical,
+    multTropical,
     Regular,
     isComposite,
     noWord,
@@ -505,6 +507,21 @@ numberToTropical = Tropical . number
 safeNumberToTropical :: (Ord n, Num n) => Number n -> Tropical n
 safeNumberToTropical n | n < 0     = Min
                        | otherwise = numberToTropical n
+
+-- | The numeric addition of tropical value,
+-- which coincides with the multiplication in the tropical semiring.
+
+addTropical :: SemigroupA a => Tropical a -> Tropical a -> Tropical a
+addTropical = (.*.)
+
+-- | The numeric multiplication of tropical values.
+
+multTropical :: SemigroupM m => Tropical m -> Tropical m -> Tropical m
+multTropical Min          _            = Min
+multTropical _            Min          = Min
+multTropical Max          _            = Max
+multTropical _            Max          = Max
+multTropical (Tropical x) (Tropical y) = Tropical (x .*. y)
 
 -- | A data type for regular expressions.
 
