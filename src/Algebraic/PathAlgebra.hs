@@ -17,10 +17,12 @@
 
 module Algebraic.PathAlgebra (
 
+	Sign ( .. ),
 	Balanced ( .. ),
 	allBalanced,
 	Clustered ( .. ),
 	allClustered,
+	Geodesic ( .. )
 
 	) where
 
