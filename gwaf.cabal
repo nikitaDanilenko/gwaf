@@ -30,7 +30,7 @@ library
   exposed-modules:   Algebraic.Closure,
                      Algebraic.Matrix,
                      Algebraic.PathAlgebra,
-                     Algebraic.Semiring, 
+                     Algebraic.Structures, 
                      Algebraic.Vector,
 
                      Auxiliary.AList, 
