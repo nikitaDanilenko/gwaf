@@ -17,12 +17,11 @@
 
 module Graph.SocialNetworks (
 
-	Sign,
-
 	-- * Predicates
 
 	isClustered,
 	isClustered2,
+	isBalanced,
 	
 	-- * Auxiliary
 
@@ -36,22 +35,14 @@ import Data.Foldable          ( Foldable )
 import Algebraic.Closure      ( starSymmetricClosureC )
 import Algebraic.Matrix       ( Matrix, toUnitMatrix, filterMatrix, isEmptyMatrix, identityMatrix,
 	                              symmetricClosureC, HasVMM )
-import Algebraic.PathAlgebra  ( Clustered ( P, N ) )
+import Algebraic.PathAlgebra  ( Clustered ( P, N ), Balanced ( AllPositive, AllNegative ),
+                                Sign ( Pos, Neg ) )
 import Algebraic.Structures   ( KleeneAlgebraC )
 
 import Auxiliary.KeyedClasses ( KeyMaybeFunctor )
 import Auxiliary.Mapping      ( Mapping )
 import Auxiliary.SetOps       ( (//\), UnionableHom, Unionable, Intersectable )
 
--- | Data type for signs (positive and negative).
-
-data Sign = Pos | Neg
-	deriving Eq
-
-instance Show Sign where
-
-	show Pos = "+"
-	show Neg = "-"
 
 -- | Tests whether a given graph is clustered using a relational approach.
 
@@ -80,7 +71,7 @@ toBool = toUnitMatrix
 -- | Tests whether a graph is clustered using an algebraic approach that computes the star closure
 -- in the 'Clustered' Kleene algebra as an intermediate step.
 
-isClustered2 :: 	(UnionableHom q, Mapping q, Intersectable q q, 
+isClustered2 :: (UnionableHom q, Mapping q, Intersectable q q, 
 	 Unionable vec q, HasVMM vec q, 
 	 UnionableHom vec, Intersectable vec vec) => 
 			Matrix q vec Sign -> Bool
@@ -102,3 +93,17 @@ isStarDiagonalOne embed m = starSymmetricClosureC (fmap embed m) //\ i == i wher
 signToClustered :: Sign -> Clustered
 signToClustered Pos = P
 signToClustered Neg = N
+
+-- | Interpres 'Sign' values as elements of the 'Balanced' Kleene algebra.
+
+signToBalanced :: Sign -> Balanced
+signToBalanced Pos = AllPositive
+signToBalanced Neg = AllNegative
+
+-- | Tests whether a graph is balanced.
+
+isBalanced :: (UnionableHom q, Mapping q, Intersectable q q, 
+	 Unionable vec q, HasVMM vec q, 
+	 UnionableHom vec, Intersectable vec vec) => 
+		Matrix q vec Sign -> Bool
+isBalanced = isStarDiagonalOne signToBalanced
