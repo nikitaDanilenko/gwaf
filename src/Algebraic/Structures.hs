@@ -79,7 +79,7 @@ import Control.Arrow       ( first, (***) )
 import Data.Function       ( on )
 import Data.List           ( genericReplicate )
 import Data.Maybe          ( isNothing )
-import Data.Monoid         ( First ( .. ), mappend )
+import Data.Monoid         ( First ( .. ), mappend, Sum )
 import Data.Ord            ( comparing )
 import Test.QuickCheck     ( Arbitrary, arbitrary, frequency, suchThat )
 
@@ -636,6 +636,10 @@ instance SemigroupA Bool where
 -- | The additive number operation.
 instance Num n => SemigroupA (Number n) where
   (.+.) = (+)
+
+-- | Structurally similar to the 'Monoid' instance for 'Sum'.
+instance Num n => SemigroupA (Sum n) where
+  (.+.) = mappend
 
 -- | The Min-Plus instance, where addition is the minimum of two values.
 
