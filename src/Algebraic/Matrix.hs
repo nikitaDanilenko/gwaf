@@ -340,6 +340,9 @@ instance HasHetVMM IntMap SafeArray IntMap IntMap
 -- In these cases one usually also has the property that the same container type is used for
 -- the inner layers of the matrix.
 -- We abbreviate this variation of the 'HasHetVMM' type class in a new homogeneous type class.
+-- (One could avoid the instance declarations using 'ConstraintKinds'.
+--  However, since @vec@ occurs more than once, using 'HasVMM' in a class definition
+--  would require 'UndecidableInstances'.)
 
 class HasHetVMM vec q vec vec => HasVMM vec q
 
