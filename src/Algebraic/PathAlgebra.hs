@@ -29,7 +29,8 @@ import Test.QuickCheck    ( Arbitrary, arbitrary, frequency )
 import Algebraic.Semiring ( SemigroupA, MonoidA, FindZero, 
 	                          SemigroupM, MonoidM, FindOne,
 	                          Semiring, IdempotentSemiring, KleeneAlgebra, 
-	                          (.+.), zero, mtimes, isZero, (.*.), one, (.^.), isOne, star )
+	                          (.+.), zero, mtimes, isZero, (.*.), one, (.^.), isOne, star,
+	                          Tropical ( .. ), addTropical, multTropical )
 import Auxiliary.General  ( allValues )
 
 -- | Data type for the sign of a number.
@@ -239,3 +240,54 @@ instance KleeneAlgebra Clustered where
 	star N = A
 	star A = A
 	star _ = P
+
+-- | The geodesic semiring collects information about the shortest paths between two
+-- vertices.
+-- The geodesic length denotes the length of a shortest path,
+-- while the geodesic weight is the number of shortest paths between two vertices.
+
+data Geodesic l w = Geodesic { geodesicLength :: Tropical l, geodesicWeight :: Tropical w }
+	deriving (Show, Eq)
+
+instance (Ord l, SemigroupA w) => SemigroupA (Geodesic l w) where
+
+	Geodesic m i .+. Geodesic n j = Geodesic (m .+. n) k where
+		k | m < n     = i
+		  | m == n    = i `addTropical` j
+		  | otherwise = j
+
+instance (Ord l, SemigroupA w) => MonoidA (Geodesic l w) where
+
+	zero = Geodesic Max Min
+
+instance FindZero (Geodesic l w) where
+
+	isZero (Geodesic Max Min) = True
+	isZero _                  = False
+
+instance (SemigroupA l, SemigroupM w) => SemigroupM (Geodesic l w) where
+
+	-- The multiplication in the first component is the multiplication of Tropical values,
+	-- which is the numerical addition of these values with Min = 0 and Max = Infinity.
+
+	Geodesic m i .*. Geodesic n j = Geodesic (m .*. n) (i `multTropical` j)
+
+instance (SemigroupA l, MonoidM w) => MonoidM (Geodesic l w) where
+
+	one = Geodesic Min (Tropical one)
+
+instance FindOne w => FindOne (Geodesic l w) where
+
+	isOne (Geodesic Min (Tropical t)) = isOne t
+	isOne _                           = False
+
+instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w) => Semiring (Geodesic l w)
+
+instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w) => IdempotentSemiring (Geodesic l w)
+
+instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w) => KleeneAlgebra (Geodesic l w) where
+
+		star (Geodesic l w) = Geodesic Min (f l w) where
+			f Min Min = Tropical one
+			f Min _   = Max
+			f _   _   = Tropical one
