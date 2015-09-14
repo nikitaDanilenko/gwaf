@@ -22,8 +22,10 @@ module Algebraic.Matrix (
   Matrix,
   matrix,
   fromRows,
+  fromListOfMappings,
   fromMappings,
   fromAdjacencies,
+  fromListOfLists,
   toMat,
 
   -- * Auxiliary functions
@@ -186,15 +188,25 @@ toMat = map (fmap toRow) . toRow . matrix
 fromRows :: (Mapping o, Mapping i, Foldable f, Functor f) => f (Row a) -> Matrix o i a
 fromRows = fromMappings . fmap fromRow
 
+-- | Transforms a list of 'Mapping's into a matrix.
+
+fromListOfMappings :: Mapping o => [i a] -> Matrix o i a
+fromListOfMappings = Matrix . fromRow . zip [0 .. ]
+
 -- | Transforms a structure of 'Mapping's into a matrix.
 
 fromMappings :: (Mapping o, Foldable f) => f (i a) -> Matrix o i a
-fromMappings = Matrix . fromRow . zip [0 ..] . toList
+fromMappings = fromListOfMappings . toList
 
 -- | Transforms a structure of successor lists into a matrix with '()' labels.
 
 fromAdjacencies :: (Mapping o, Mapping i, Foldable f, Functor f) => f [Key] -> Matrix o i ()
 fromAdjacencies = fromMappings . fmap toMapping
+
+-- | Transforms a list of (unlabelled) successor lists into a matrix.
+
+fromListOfLists :: (Mapping o, Mapping i) => [[Key]] -> Matrix o i ()
+fromListOfLists = fromListOfMappings . fmap toMapping
 
 -- | Auxiliary function that applies a supplied combinator to the collections inside the
 -- matrix parameters and wraps the result in a 'Matrix wrapper again.
