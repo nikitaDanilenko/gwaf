@@ -24,14 +24,14 @@ module Algebraic.PathAlgebra (
 
 	) where
 
-import Test.QuickCheck    ( Arbitrary, arbitrary, frequency )
+import Test.QuickCheck      ( Arbitrary, arbitrary, frequency )
 
-import Algebraic.Semiring ( SemigroupA, MonoidA, FindZero, 
-	                          SemigroupM, MonoidM, FindOne,
-	                          Semiring, IdempotentSemiring, KleeneAlgebra, 
-	                          (.+.), zero, mtimes, isZero, (.*.), one, (.^.), isOne, star,
-	                          Tropical ( .. ), addTropical, multTropical )
-import Auxiliary.General  ( allValues )
+import Algebraic.Structures ( SemigroupA, MonoidA, FindZero, 
+	                            SemigroupM, MonoidM, FindOne,
+	                            Semiring, IdempotentSemiring, KleeneAlgebra, 
+	                            (.+.), zero, mtimes, isZero, (.*.), one, (.^.), isOne, star,
+	                            Tropical ( .. ), addTropical, multTropical )
+import Auxiliary.General    ( allValues )
 
 -- | Data type for the sign of a number.
 

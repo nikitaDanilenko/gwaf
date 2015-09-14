@@ -28,12 +28,12 @@ module Algebraic.Closure (
 
 import Control.Applicative ( (<*>) )
 
-import Algebraic.Matrix   ( Matrix, (!!!), rowMap, rowNumbers, identityMatrix )
-import Algebraic.Semiring ( KleeneAlgebra, KleeneAlgebraC, Semiring, star, (.*.), (.+.) )
-import Algebraic.Vector   ( (*>), (*>>), (.@.), (<+++>) )
-import Auxiliary.General  ( Key )
-import Auxiliary.Mapping  ( Mapping, MappingV )
-import Auxiliary.SetOps   ( UnionableHom )
+import Algebraic.Matrix     ( Matrix, (!!!), rowMap, rowNumbers, identityMatrix )
+import Algebraic.Structures ( KleeneAlgebra, KleeneAlgebraC, Semiring, star, (.*.), (.+.) )
+import Algebraic.Vector     ( (*>), (*>>), (.@.), (<+++>) )
+import Auxiliary.General    ( Key )
+import Auxiliary.Mapping    ( Mapping, MappingV )
+import Auxiliary.SetOps     ( UnionableHom )
 
 -- | This function contains the main strategy of the computation,
 -- which is taking the step iterator and folding it over the row indices of the matrix.

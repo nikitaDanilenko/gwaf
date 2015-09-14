@@ -52,7 +52,7 @@ module Algebraic.Vector (
 import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( foldr )
 
-import Algebraic.Semiring           ( SemigroupA, MonoidA, (.+.), zero, MonoidM, (.*.),
+import Algebraic.Structures         ( SemigroupA, MonoidA, (.+.), zero, MonoidM, (.*.),
                                       one, GroupA, inverseA, FindZero, isZero, isNotZero, FindOne,
                                       isOne, Number )
 import Auxiliary.General            ( Key, (<.>), scaleLeft )

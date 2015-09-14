@@ -22,7 +22,7 @@ module Graph.MaximumFlow (
 import Data.Foldable                ( Foldable )
 import qualified Data.Foldable as F ( sum )
 
-import Algebraic.Semiring           ( Tropical ( Tropical ), weight, zero, FindZero, GroupA, (.-.) )
+import Algebraic.Structures         ( Tropical ( Tropical ), weight, zero, FindZero, GroupA, (.-.) )
 import Algebraic.Matrix             ( (.++.), (.--.), transposeSquare, HasVMM, (.*+-) )
 import Auxiliary.General            ( stepwise2, Key )
 import Auxiliary.KeyedClasses       ( KeyFunctor )

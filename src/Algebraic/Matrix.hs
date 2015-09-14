@@ -102,7 +102,7 @@ import Data.IntMap                  ( IntMap )
 import Data.List                    ( intercalate )
 import Test.QuickCheck              ( Arbitrary, arbitrary, shrink, sized )
 
-import Algebraic.Semiring           ( MonoidA, (.+.), FindZero, isNotZero, zero, GroupA, inverseA,
+import Algebraic.Structures         ( MonoidA, (.+.), FindZero, isNotZero, zero, GroupA, inverseA,
                                       MonoidM, (.*.), one, Semiring, FindOne, SemigroupA,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )

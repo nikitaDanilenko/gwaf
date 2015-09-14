@@ -28,7 +28,7 @@ module Graph.ApprovalVoting (
 import Control.Applicative    ( (<*>) )
 
 import Algebraic.Matrix       ( Matrix, HasVMM )
-import Algebraic.Semiring     ( Number, number )
+import Algebraic.Structures   ( Number, number )
 import Algebraic.Vector       ( (<-->), (.@.), maxIndices, maxVector, restrictToMax )
 import Auxiliary.General      ( Key, powerlistFrom, emptyOrContained )
 import Auxiliary.Mapping      ( Mapping, size, toMapping )

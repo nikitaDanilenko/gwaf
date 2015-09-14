@@ -88,7 +88,7 @@ import Data.Tree              ( Forest, Tree ( Node ) )
 
 import Algebraic.Matrix       ( HasVMM, HasHetVMM, vecMatMult2, allUnion, leftmostUnion,
                                 bigunionWithE )
-import Algebraic.Semiring     ( Number, SemigroupA, (.+.) )
+import Algebraic.Structures   ( Number, SemigroupA, (.+.) )
 import Auxiliary.General      ( Arc )
 import Auxiliary.KeyedClasses ( KeyFunctor, addKeys )
 import Auxiliary.Mapping      ( MappingV, Mapping, empty, isEmpty, toRow )
