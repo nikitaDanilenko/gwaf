@@ -35,9 +35,6 @@ module Algebraic.Matrix (
   removeZeroesMatrix,
   emptyMatrix,
   identityMatrix,
-  bigunionWithE,
-  allUnion,
-  leftmostUnion,
   
   -- * Functor operations
 
@@ -119,7 +116,7 @@ import Auxiliary.SafeArray          ( SafeArray )
 import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersectionWithKey,
                                       Unionable, unionWith, Complementable, differenceWith,
                                       differenceWith2, UnionableHom, SetOps, bigunionWith,
-                                      (\\/), (/\\), (//\) )
+                                      leftmostUnion, allUnion, (\\/), (/\\), (//\) )
 import Auxiliary.SetOpsInstances    ()
 
 -- | Matrix data type.
@@ -372,21 +369,6 @@ instance HasVMM AList  IntMap
 instance HasVMM AList  SafeArray
 instance HasVMM IntMap IntMap
 instance HasVMM IntMap SafeArray
-
--- | A special instance of 'bigunionWith' that inserts values into an empty mapping.
-
-bigunionWithE :: (MappingV i, Unionable t i, Foldable f) => (a -> a -> a) -> f (t a) -> i a
-bigunionWithE op = bigunionWith op empty
-
--- | The folded version of the left-biased union.
-
-leftmostUnion :: (MappingV i, Unionable t i, Foldable f) => f (t a) -> i a
-leftmostUnion = bigunionWithE const
-
--- | A folded union that collects all possible values.
-
-allUnion :: (MappingV i, Unionable t i, Foldable f) => f (t [a]) -> i [a]
-allUnion = bigunionWithE (++)
 
 -- | The canonic implementation of the usual vector-matrix multiplication over semirings.
 -- The result vector may contain zeroes.

@@ -44,6 +44,9 @@ module Auxiliary.SetOps (
   Unionable ( .. ),
   bigunionWith,
   bigunionLeft,
+  bigunionWithE,
+  leftmostUnion,
+  allUnion,
   UnionableHom,
 
   -- * Heterogeneous differences
@@ -60,11 +63,12 @@ module Auxiliary.SetOps (
 
   ) where
 
-import Data.Foldable                    ( Foldable )
-import qualified Data.Foldable as F     ( foldr )
+import Data.Foldable                ( Foldable )
+import qualified Data.Foldable as F ( foldr )
 
-import Auxiliary.General                ( Key, scaleLeft )
-import Auxiliary.KeyedClasses           ( Lookup, clookup, KeyMaybeFunctor, fmapMaybeWithKey )
+import Auxiliary.General            ( Key, scaleLeft )
+import Auxiliary.KeyedClasses       ( Lookup, clookup, KeyMaybeFunctor, fmapMaybeWithKey )
+import Auxiliary.Mapping            ( MappingV, empty )
 
 -- | The 'Intersectable' type class abstracts the heterogeneous intersection of indexed containers.
 -- The idea is that the main function 'intersectWithKey' takes a function @op@ that is
@@ -210,6 +214,21 @@ bigunionWith = F.foldr . unionWith
 
 bigunionLeft :: (Unionable t i, Foldable f) => i a -> f (t a) -> i a
 bigunionLeft = F.foldr (\\/)
+
+-- | A special instance of 'bigunionWith' that inserts values into an empty mapping.
+
+bigunionWithE :: (MappingV i, Unionable t i, Foldable f) => (a -> a -> a) -> f (t a) -> i a
+bigunionWithE op = bigunionWith op empty
+
+-- | The folded version of the left-biased union.
+
+leftmostUnion :: (MappingV i, Unionable t i, Foldable f) => f (t a) -> i a
+leftmostUnion = bigunionWithE const
+
+-- | A folded union that collects all possible values.
+
+allUnion :: (MappingV i, Unionable t i, Foldable f) => f (t [a]) -> i [a]
+allUnion = bigunionWithE (++)
 
 -- | A type class for heterogeneous relative complements.
 -- The basic idea is to remove elements of the second structure from the first one.

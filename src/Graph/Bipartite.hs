@@ -34,7 +34,7 @@ import Auxiliary.MonadicSet   ( runWithNewSize, ifInSet, includeAll )
 import Auxiliary.SetOps       ( (//\), Intersectable, IntersectableHom, UnionableHom, Unionable,
                                 (\\/), Complementable, bigunionLeft )
 import Graph.Graph            ( Graph, Vertex, verticesList, numberOfVertices )
-import Graph.Paths            ( stepsOneGraphWith )
+import Graph.Paths            ( stepsOneGraphWith, componentwise )
 
 -- | Maps a matrix to a Boolean unit matrix.
 
@@ -82,24 +82,6 @@ isBipartiteSlow2 a = isEmptyMatrix (ab //\ starClosureOC (ab .**=. ab))
 isWeakBipartition :: (HasVMM vec q, Intersectable vec vec, Unionable vec vec) => 
 	Graph q vec b -> vec a -> vec a -> Bool
 isWeakBipartition graph ls gs = isEmpty (step ls graph \\/ step gs graph)
-
--- | This function computes (lazily) the list of reachability steps for each individual vertex.
--- Then it traverses the resulting list left-to-right and removes the reachability steps of
--- those vertices that are already contained in a visited connected component.
--- The intermediate result is a list of reachability steps for each connected component,
--- where each such list is labelled with a representative of the component.
--- Finally, the supplied function is applied to each element in this intermediate result.
-
-componentwise :: (Mapping q, HasVMM vec q, Complementable vec q) => 
-	(Vertex -> [vec ()] -> c) -> Graph q vec b -> [c]
-componentwise fun graph = runWithNewSize (numberOfVertices graph) (prune generated) where
-
-  generated = map (\v -> (v, stepsOneGraphWith (.*+-) (toMapping [v]) graph)) (verticesList graph)
-
-  prune []               = return []
-  prune ((i, ls) : ilss) = ifInSet i 
-  						    (prune ilss) 
-  	                        (includeAll (concatMap keys ls) >> fmap (fun i ls :) (prune ilss))
 
 -- | This function uses the even-odd-strategy to compute a special candidate for a bipartition.
 -- If said candidate is a weak bipartition, it is a bipartition already;

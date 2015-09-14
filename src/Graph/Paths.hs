@@ -77,6 +77,11 @@ module Graph.Paths (
   shortestDisjointUpToStartEndWithSize,
   shortestDisjointUpToStartEndWithFirstSize,
 
+  -- * Weakly connected components
+
+  componentwise,
+  weaklyConnectedComponents,
+
   -- * Auxiliaries
 
   VPath,
@@ -86,15 +91,15 @@ module Graph.Paths (
 import Data.Traversable       ( Traversable )
 import Data.Tree              ( Forest, Tree ( Node ) )
 
-import Algebraic.Matrix       ( HasVMM, HasHetVMM, vecMatMult2, allUnion, leftmostUnion,
-                                bigunionWithE )
+import Algebraic.Matrix       ( HasVMM, HasHetVMM, vecMatMult2, (.*+-), symmetricClosureWith )
 import Algebraic.Structures   ( Number, SemigroupA, (.+.) )
 import Auxiliary.General      ( Arc )
 import Auxiliary.KeyedClasses ( KeyFunctor, addKeys )
-import Auxiliary.Mapping      ( MappingV, Mapping, empty, isEmpty, toRow )
+import Auxiliary.Mapping      ( MappingV, Mapping, empty, isEmpty, toRow, toMapping, keys )
+import Auxiliary.MonadicSet   ( ifInSet, includeAll, runWithNewSize )
 import Auxiliary.SetOps       ( Intersectable, Unionable, UnionableHom, Complementable,
-                                (\\\), (//\), bigunionLeft )
-import Graph.Graph            ( Graph, Vertex, vertices, numberOfVertices )
+                                (\\\), (//\), bigunionLeft, allUnion, leftmostUnion, bigunionWithE )
+import Graph.Graph            ( Graph, Vertex, vertices, verticesList, numberOfVertices )
 import Graph.Path             ( Path, stepRight )
 import Graph.Prune            ( pruneDisjoint, pruneDisjointUpToStart, pruneDisjointUpToEnd,
                                 pruneDisjointUpToStartEnd )
@@ -649,3 +654,29 @@ reachabilityForestOneGraphSimple ::
   (HasHetVMM vec q vec' vec, Intersectable vec q', Complementable vec q, KeyFunctor q)
   => vec a -> Graph q vec' b -> q' c -> vec (Forest Vertex)
 reachabilityForestOneGraphSimple = reachabilityForestOneGraph . fmap (const [])
+
+-- | This function computes (lazily) the list of reachability steps for each individual vertex.
+-- Then it traverses the resulting list left-to-right and removes the reachability steps of
+-- those vertices that are already contained in a visited connected component.
+-- The intermediate result is a list of reachability steps for each connected component,
+-- where each such list is labelled with a representative of the component.
+-- Finally, the supplied function is applied to each element in this intermediate result.
+
+componentwise :: (Mapping q, HasVMM vec q, Complementable vec q) => 
+  (Vertex -> [vec ()] -> c) -> Graph q vec b -> [c]
+componentwise fun graph = runWithNewSize (numberOfVertices graph) (prune generated) where
+
+  generated = map (\v -> (v, stepsOneGraphWith (.*+-) (toMapping [v]) graph)) (verticesList graph)
+
+  prune []               = return []
+  prune ((i, ls) : ilss) = ifInSet i 
+                            (prune ilss) 
+                            (includeAll (concatMap keys ls) >> fmap (fun i ls :) (prune ilss))
+
+-- | Computes the weakly connected components of a graph, 
+-- which are the strongly connected components of the symmetric closure.
+
+weaklyConnectedComponents :: 
+ (Mapping q, HasVMM vec q, Complementable vec q, Unionable vec q, Unionable vec vec) =>
+  Graph q vec a -> [vec ()]
+weaklyConnectedComponents = componentwise (const leftmostUnion) . symmetricClosureWith const
