@@ -80,6 +80,7 @@ module Graph.Paths (
   -- * Weakly connected components
 
   componentwise,
+  weaklyConnectedCollections,
   weaklyConnectedComponents,
 
   -- * Auxiliaries
@@ -673,10 +674,18 @@ componentwise fun graph = runWithNewSize (numberOfVertices graph) (prune generat
                             (prune ilss) 
                             (includeAll (concatMap keys ls) >> fmap (fun i ls :) (prune ilss))
 
+-- | Computes the weakly connected collections of vertices of a graph.
+-- If the graph is symmetric, these collections are the connected components of the graph.
+
+weaklyConnectedCollections :: 
+  (HasVMM vec q, Unionable vec i, Complementable vec q, Mapping q, MappingV i) =>
+    Graph q vec b -> [i ()]
+weaklyConnectedCollections = componentwise (const leftmostUnion)
+
 -- | Computes the weakly connected components of a graph, 
 -- which are the strongly connected components of the symmetric closure.
 
 weaklyConnectedComponents :: 
  (Mapping q, HasVMM vec q, Complementable vec q, Unionable vec q, Unionable vec vec) =>
   Graph q vec a -> [vec ()]
-weaklyConnectedComponents = componentwise (const leftmostUnion) . symmetricClosureWith const
+weaklyConnectedComponents = weaklyConnectedCollections . symmetricClosureWith const
