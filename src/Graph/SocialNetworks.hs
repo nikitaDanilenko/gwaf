@@ -22,6 +22,15 @@ module Graph.SocialNetworks (
 	isClustered,
 	isClustered2,
 	isBalanced,
+
+	-- * Clustering
+
+	findClusteringCandidate,
+
+	-- * Betweenness
+
+	betweenness,
+	betweennessRow,
 	
 	-- * Auxiliary
 
@@ -30,18 +39,26 @@ module Graph.SocialNetworks (
 
 	) where
 
+import Control.Arrow          ( (&&&) )
 import Data.Foldable          ( Foldable )
+import Data.Monoid            ( Sum ( Sum ), getSum )
+import Data.Ratio             ( Rational, (%) )
 
-import Algebraic.Closure      ( starSymmetricClosureC )
+import Algebraic.Closure      ( starSymmetricClosureC, kleeneClosureC )
 import Algebraic.Matrix       ( Matrix, toUnitMatrix, filterMatrix, isEmptyMatrix, identityMatrix,
-	                              symmetricClosureC, HasVMM )
+	                              symmetricClosureC, HasVMM, (.@.) )
 import Algebraic.PathAlgebra  ( Clustered ( P, N ), Balanced ( AllPositive, AllNegative ),
-                                Sign ( Pos, Neg ) )
-import Algebraic.Structures   ( KleeneAlgebraC )
+                                Sign ( Pos, Neg ), Geodesic ( Geodesic ), geodesicLength,
+                                geodesicWeight )
+import Algebraic.Structures   ( KleeneAlgebraC, addTropical, tropicalToNum, Tropical ( Tropical ),
+                                Number ( Number ), number )
 
+import Auxiliary.General      ( (<.>), Row )
 import Auxiliary.KeyedClasses ( KeyMaybeFunctor )
-import Auxiliary.Mapping      ( Mapping )
-import Auxiliary.SetOps       ( (//\), UnionableHom, Unionable, Intersectable )
+import Auxiliary.Mapping      ( Mapping, MappingV, fromRow )
+import Auxiliary.SetOps       ( (//\), UnionableHom, Unionable, Intersectable, Complementable )
+import Graph.Graph            ( Graph, verticesList )
+import Graph.Paths            ( weaklyConnectedComponents )
 
 
 -- | Tests whether a given graph is clustered using a relational approach.
@@ -74,7 +91,7 @@ toBool = toUnitMatrix
 isClustered2 :: (UnionableHom q, Mapping q, Intersectable q q, 
 	 Unionable vec q, HasVMM vec q, 
 	 UnionableHom vec, Intersectable vec vec) => 
-			Matrix q vec Sign -> Bool
+			Graph q vec Sign -> Bool
 isClustered2 = isStarDiagonalOne signToClustered
 
 -- | Checks whether the star closure of the symmetric closure of a matrix contains ones at
@@ -105,5 +122,53 @@ signToBalanced Neg = AllNegative
 isBalanced :: (UnionableHom q, Mapping q, Intersectable q q, 
 	 Unionable vec q, HasVMM vec q, 
 	 UnionableHom vec, Intersectable vec vec) => 
-		Matrix q vec Sign -> Bool
+		Graph q vec Sign -> Bool
 isBalanced = isStarDiagonalOne signToBalanced
+
+-- | Computes the weakly connected components of the symmetric closure of the positive edges.
+-- If the graph is clustered, then the resulting sets constitute a clustering
+-- (positive edges connect edges from the same set, 
+--  negative edges connect edges from different sets).
+-- However, these sets can be computed without the graph being clustered,
+-- thus the result is referred to as a candidate of a clustering only.
+
+findClusteringCandidate :: 
+	(Mapping q, HasVMM vec q, Complementable vec q, Unionable vec q, Unionable vec vec) => 
+		Graph q vec Sign -> [vec ()]
+findClusteringCandidate = weaklyConnectedComponents . positive
+
+-- | Computes the vector of the betweenness values for all vertices as a vector.
+
+betweenness :: (UnionableHom vec, Mapping q, MappingV vec) =>
+	Matrix q vec a -> vec Rational
+betweenness = fromRow . betweennessRow
+
+-- | Computes the vector of the betweenness values for all vertices.
+-- For simplicity of the implementation the result is a 'Row'.
+
+betweennessRow :: (UnionableHom vec, Mapping q, MappingV vec) =>
+	Graph q vec a -> Row Rational
+betweennessRow m = map (id &&& between) vs where
+
+    between t = sum [sigma v w t % gamma v w | (v, w) <- pairs, v /= t, t /= w]
+    
+    pairs  = [(v, w) | v <- vs, w <- vs, gamma v w /= 0]
+    vs     = verticesList m
+
+    sigma v w t  | dvt `addTropical` dtw == d v w  = gvt * gtw
+                 | otherwise                       = 0
+                 where  (dvt, gvt) = both v t
+                        (dtw, gtw) = both t w
+    
+    d     = fst <.> both
+    gamma = snd <.> both
+    
+    both v w = (geodesicLength q, number (tropicalToNum (geodesicWeight q)))
+      where q = kcm .@. (v, w)
+
+    kcm = kleeneClosureC (fmap (const label) m)
+
+-- | A special initial label for the computation of the betweenness centrality.
+
+label :: Geodesic (Number Integer) (Number Integer)
+label = Geodesic (Tropical (Number 1)) (Tropical 1)
