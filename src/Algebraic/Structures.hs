@@ -59,6 +59,7 @@ module Algebraic.Structures (
     Number ( .. ),
     Tropical ( .. ),
     tropicalToNumber,
+    tropicalToNum,
     numberToTropical,
     safeNumberToTropical,
     addTropical,
@@ -500,6 +501,15 @@ tropicalToNumber _            = error "Not a number."
 
 numberToTropical :: Number n -> Tropical n
 numberToTropical = Tropical . number
+
+-- | Transforms a 'Tropical' value into the underlying 'Num' type.
+-- 'Min' is interpreted as zero (thus this function is not injective),
+-- and 'Max' is interpreted as infinity.
+
+tropicalToNum :: Num n => Tropical n -> n
+tropicalToNum Min          = 0
+tropicalToNum (Tropical w) = w
+tropicalToNum _            = error "Strutures.tropicalToNum: Infinity is not a number."
 
 -- | Safely transforms a number into a weight by checking whether the number is greater
 -- than zero first.
