@@ -47,6 +47,7 @@ module Algebraic.Matrix (
   (!!!),
   mAtZ,
   mAt,
+  (.@.),
   rowNumbers,
   rowDimension,
   addValue,
@@ -245,8 +246,16 @@ removeZeroesMatrix = filterMatrix isNotZero
 mAtZ :: (Lookup o, MappingV i) => a -> Matrix o i a -> Key -> Key -> a
 mAtZ z m i = maybeAt z (m !!! i)
 
+-- | Returns the value at a given position and the 'zero' from the underlying monoid,
+-- if this position is not filled.
+
 mAt :: (Lookup o, MappingV i, MonoidA a) => Matrix o i a -> Key -> Key -> a
 mAt = mAtZ zero
+
+-- | An uncurried variant of 'mAt'.
+
+(.@.) :: (Lookup o, MappingV i, MonoidA a) => Matrix o i a -> (Key, Key) -> a
+(.@.) = uncurry . mAt
 
 -- | Returns the list of the row numbers in the matrix.
 
