@@ -28,7 +28,7 @@ import Test.QuickCheck      ( Arbitrary, arbitrary, frequency )
 
 import Algebraic.Structures ( SemigroupA, MonoidA, FindZero, 
 	                            SemigroupM, MonoidM, FindOne,
-	                            Semiring, IdempotentSemiring, KleeneAlgebra, 
+	                            Semiring, IdempotentSemiring, KleeneAlgebra, KleeneAlgebraC,
 	                            (.+.), zero, mtimes, isZero, (.*.), one, (.^.), isOne, star,
 	                            Tropical ( .. ), addTropical, multTropical )
 import Auxiliary.General    ( allValues )
@@ -128,6 +128,8 @@ instance KleeneAlgebra Balanced where
 	star NoWalkB     = AllPositive
 	star AllPositive = AllPositive
 	star _           = Mixed
+
+instance KleeneAlgebraC Balanced
 
 -- | A data type that can be used to check whether a graph is clustered.
 -- The semantics are the following (as described by Batagelj):
@@ -240,6 +242,8 @@ instance KleeneAlgebra Clustered where
 	star N = A
 	star A = A
 	star _ = P
+
+instance KleeneAlgebraC Clustered
 
 -- | The geodesic semiring collects information about the shortest paths between two
 -- vertices.
