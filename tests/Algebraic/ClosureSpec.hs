@@ -19,7 +19,7 @@ import Test.QuickCheck           ( Arbitrary, property )
 
 import Algebraic.Closure         ( starClosureIC, starClosureOC )
 import Algebraic.Matrix          ( Matrix, identityMatrix, (.**.), HasVMM, removeZeroesMatrix )
-import Algebraic.Semiring        ( KleeneAlgebraC, Tropical, Number, (.+.), (.<=.) )
+import Algebraic.Structures      ( KleeneAlgebraC, Tropical, Number, (.+.), (.<=.) )
 import Auxiliary.AList           ( AList )
 import Auxiliary.IntMapArbitrary ()
 import Auxiliary.Mapping         ( Mapping, MappingV )

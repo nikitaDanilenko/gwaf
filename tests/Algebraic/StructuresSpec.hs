@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------------------------
 -- |
--- Module      :  Algebraic.SemiringSpec
+-- Module      :  Algebraic.StructuresSpec
 -- Copyright   :  (c) Nikita Danilenko 2015
 -- License     :  BSD3
 -- Maintainer  :  nikita.danilenko.is@gmail.com
@@ -11,20 +11,20 @@
 
 {-# Language ScopedTypeVariables #-}
 
-module Algebraic.SemiringSpec ( spec ) where
+module Algebraic.StructuresSpec ( spec ) where
 
 import Data.List             ( genericReplicate )
 
-import Data.Monoid           ( First )
+import Data.Monoid           ( First ( First ) )
 import Test.Hspec            ( Spec )
 import Test.QuickCheck       ( Arbitrary, property )
 
-import Algebraic.Semiring    ( SemigroupA, (.+.), MonoidA, zero, msum, mtimes,
+import Algebraic.Structures  ( SemigroupA, (.+.), MonoidA, zero, msum, mtimes,
                                FindZero, isZero, isNotZero, GroupA, (.-.), inverseA,
 	                             SemigroupM, (.*.), MonoidM, one, mproduct, (.^.),
                                FindOne, isOne, isNotOne,
                                Semiring, IdempotentSemiring, (.<=.), KleeneAlgebra, star, plus,
-                               Tropical, Number )
+                               Tropical ( Tropical ), Number ( Number ) )
 import Algebraic.PathAlgebra ( Balanced, Clustered )
 import Helpers              -- ( (===), (===>), mkSuite, Proxy ( Proxy ), LabProperties, testPure, Pure, NamedProxy, tester )
 
