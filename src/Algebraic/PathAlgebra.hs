@@ -296,4 +296,4 @@ instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w) => KleeneAlgebra (Geodes
 			f Min _   = Max
 			f _   _   = Tropical one
 
-instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w) => KleeneAlgebraC (Geodesic l w)
+instance (Ord l, SemigroupA l, SemigroupA w, MonoidM w, FindOne w) => KleeneAlgebraC (Geodesic l w)
