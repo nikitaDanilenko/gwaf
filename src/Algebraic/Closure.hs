@@ -23,17 +23,21 @@ module Algebraic.Closure (
   starClosureIC,
   starClosureOC,
 
+  starSymmetricClosure,
+  starSymmetricClosureC,
+
   addIdentity
   ) where
 
 import Control.Applicative ( (<*>) )
 
-import Algebraic.Matrix     ( Matrix, (!!!), rowMap, rowNumbers, identityMatrix )
+import Algebraic.Matrix     ( Matrix, (!!!), rowMap, rowNumbers, identityMatrix, HasVMM,
+                              symmetricClosure, symmetricClosureC )
 import Algebraic.Structures ( KleeneAlgebra, KleeneAlgebraC, Semiring, star, (.*.), (.+.) )
 import Algebraic.Vector     ( (*>), (*>>), (.@.), (<+++>) )
 import Auxiliary.General    ( Key )
 import Auxiliary.Mapping    ( Mapping, MappingV )
-import Auxiliary.SetOps     ( UnionableHom )
+import Auxiliary.SetOps     ( UnionableHom, Unionable )
 
 -- | This function contains the main strategy of the computation,
 -- which is taking the step iterator and folding it over the row indices of the matrix.
@@ -115,3 +119,18 @@ starClosureO = addIdentity . kleeneClosure
 starClosureOC :: (Mapping o, UnionableHom o, MappingV i, UnionableHom i, KleeneAlgebraC kc) =>
   Matrix o i kc -> Matrix o i kc
 starClosureOC = addIdentity . kleeneClosureC
+
+-- | Computes the star closure of the symmetric closure of a matrix over a Kleene algebra.
+
+starSymmetricClosure ::
+  (Unionable vec q, UnionableHom vec, UnionableHom q, Mapping q, HasVMM vec q, KleeneAlgebra ka) =>
+  Matrix q vec ka -> Matrix q vec ka
+starSymmetricClosure = starClosureO . symmetricClosure
+
+-- | Computes the star closure of the symmetric closure of a matrix over a Kleene algebra with
+-- distinguishable constants.
+
+starSymmetricClosureC ::
+  (Unionable vec q, UnionableHom vec, UnionableHom q, Mapping q, HasVMM vec q, KleeneAlgebraC ka) =>
+  Matrix q vec ka -> Matrix q vec ka
+starSymmetricClosureC = starClosureOC . symmetricClosureC
