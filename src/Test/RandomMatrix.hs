@@ -125,6 +125,11 @@ type RandomGenerator = Int
 --   random values are drawn from.
 --   Generation is realised via shuffling a fixed matrix, which is known to be
 --   uniformly distributed.
+--   
+--   N.B.: The values in every kind of matrix are arbitrary values a-priori,
+--   which is why zeroes from certain semirings are still possible.
+--   Thus when working in an algebraic context,
+--   one should filter the resulting matrix to remove zeroes.
 
 randomMatrixWith :: (RandomGen g, Random a) =>
     g                           -- ^ random generator
