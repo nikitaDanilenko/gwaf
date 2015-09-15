@@ -26,6 +26,7 @@ module Algebraic.Matrix (
   fromMappings,
   fromAdjacencies,
   fromListOfLists,
+  fromMat,
   toMat,
 
   -- * Auxiliary functions
@@ -35,7 +36,7 @@ module Algebraic.Matrix (
   removeZeroesMatrix,
   emptyMatrix,
   identityMatrix,
-  
+
   -- * Functor operations
 
   rowMapWithKey,
@@ -95,6 +96,7 @@ module Algebraic.Matrix (
 
   ) where
 
+import Control.Arrow                ( second )
 import Data.Function                ( on )
 import Data.Foldable                ( Foldable, toList )
 import qualified Data.Foldable as F ( all )
@@ -107,7 +109,8 @@ import Algebraic.Structures         ( MonoidA, (.+.), FindZero, isNotZero, zero,
                                       SemigroupM )
 import Algebraic.Vector             ( (*>), removeZeroes, unitVector )
 import Auxiliary.AList              ( AList, asList )
-import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft )
+import Auxiliary.General            ( Key, Arc, Row, Mat, (<.>), scaleLeft, intersectionByFstWith,
+                                      unionByFstWith )
 import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyFunctor, fmapWithKey, KeyMaybeFunctor,
                                       ffilter, restrictKeys )
 import Auxiliary.Mapping            ( Mapping, MappingV, fromRow, toRow, keys, isEmpty, empty,
@@ -204,6 +207,15 @@ fromAdjacencies = fromMappings . fmap toMapping
 
 fromListOfLists :: (Mapping o, Mapping i) => [[Key]] -> Matrix o i ()
 fromListOfLists = fromListOfMappings . fmap toMapping
+
+-- | Transforms a 'Mat' into a 'Matrix'.
+-- The outer layer is checked for consistency (indices exactly from /0/ to /n/ for some suited /n/).
+-- The inner layer is not checked for negative indices.
+
+fromMat :: (Mapping o, Mapping i) => Mat a -> Matrix o i a
+fromMat m = Matrix (fromRow (map (second fromRow) 
+                                 (intersectionByFstWith const (unionByFstWith const m es) es)))
+    where es = map (second (const [])) m
 
 -- | Auxiliary function that applies a supplied combinator to the collections inside the
 -- matrix parameters and wraps the result in a 'Matrix wrapper again.
