@@ -81,6 +81,7 @@ import Data.List           ( genericReplicate )
 import Data.Maybe          ( isNothing )
 import Data.Monoid         ( First ( .. ), mappend, Sum )
 import Data.Ord            ( comparing )
+import System.Random       ( Random, random, randomR, split )
 import Test.QuickCheck     ( Arbitrary, arbitrary, frequency, suchThat )
 
 import Auxiliary.General   ( (<.>) )
@@ -451,6 +452,13 @@ instance Arbitrary n => Arbitrary (Number n) where
 
   arbitrary = fmap Number arbitrary
 
+instance Random n => Random (Number n) where
+
+  randomR (l, u) g = (Number n, g')
+    where (n, g') = randomR (number l, number u) g
+
+  random = first Number . random
+
 -- | 
 -- A maybe-like wrapper for numbers introducing a smallest and a largest element.
 -- This data type is used in Dijkstra's algorithm
@@ -490,7 +498,40 @@ instance (Num w, Ord w, Arbitrary w) => Arbitrary (Tropical w) where
                          (1, return Max), 
                          (40, fmap Tropical (arbitrary `suchThat` (> 0)))]
 
--- | Transforms a weight to a number. This is a partial function, because there is
+-- | Drawing this number is interpreted as drawing 'Min'.
+
+drawMin :: Int
+drawMin = 0
+
+-- | Drawing this number is interpreted as drawing 'Max'.
+
+drawMax :: Int
+drawMax = 41
+
+instance (Ord w, Num w, Random w) => Random (Tropical w) where
+
+  random g | c == drawMin = (Min, g')
+           | c == drawMax = (Max, g')
+           | otherwise    = first (Tropical . abs) (random g')
+          where (c, g') = randomR (drawMin, drawMax) g
+
+  randomR (l, u)                   g      | l == u       = (l, fst (split g))
+                                          | l >  u       = randomR (u, l) g
+  randomR (Min,        Tropical u) g      | c == drawMin = (Min, g')
+                                          | otherwise    = mkRndTropical (randomR (fromInteger 0, u) g')
+                                          where (c, g') = randomR (drawMin, drawMax - 1) g
+  randomR (Min,        Max)        g                     = random g
+
+  randomR (Tropical l,      Tropical u) g                = mkRndTropical (randomR (l, u) g)
+  -- In this case lb = Tropical l for some fitting l.
+  randomR (lb, Max)        g              | c == drawMax = (Max, g')
+                                          | otherwise    = first (lb `addTropicalNum`) (random g')
+                                          where (c, g') = randomR (1 + drawMin, drawMax) g
+
+mkRndTropical :: (w, g) -> (Tropical w, g)
+mkRndTropical = first Tropical
+  
+-- | Transforms a weight into a number. This is a partial function, because there is
 --   no sensible representation of @Min@ or @Max@ in @Number@s.
 
 tropicalToNumber :: Tropical w -> Number w
@@ -509,7 +550,7 @@ numberToTropical = Tropical . number
 tropicalToNum :: Num n => Tropical n -> n
 tropicalToNum Min          = 0
 tropicalToNum (Tropical w) = w
-tropicalToNum _            = error "Strutures.tropicalToNum: Infinity is not a number."
+tropicalToNum _            = error "Structures.tropicalToNum: Infinity is not a number."
 
 -- | Safely transforms a number into a weight by checking whether the number is greater
 -- than zero first.
@@ -523,6 +564,9 @@ safeNumberToTropical n | n < 0     = Min
 
 addTropical :: SemigroupA a => Tropical a -> Tropical a -> Tropical a
 addTropical = (.*.)
+
+addTropicalNum :: Num n => Tropical n -> Tropical n -> Tropical n
+addTropicalNum x y = fmap number (fmap Number x `addTropical` fmap Number y)
 
 -- | The numeric multiplication of tropical values.
 
