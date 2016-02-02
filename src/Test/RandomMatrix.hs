@@ -75,7 +75,7 @@ chopUniform = breakAt id
 --   some integer /n/.
 --   
 --   The name of the function hints at its use, since one can use the resulting chunks to fill a
---   lower triangle matrix.
+--   lower triangular matrix.
 
 chopTriangle :: [a] -> [[a]]
 chopTriangle = breakAt (+ 1) 1
@@ -85,7 +85,7 @@ chopTriangle = breakAt (+ 1) 1
 -- is not /n*(n+1)\/2/ for some integer /n/.
 --   
 --   Again, the name hints at the function's application, namely the construction of a strict lower
---   triangle matrix.
+--   triangular matrix.
 
 chopStrictTriangle :: [a] -> [[a]]
 chopStrictTriangle = breakAt (+1) 0
@@ -265,14 +265,14 @@ randomDiagonal' :: Random a =>
   -> Mat a
 randomDiagonal' = withStdGen randomDiagonal
 
--- | Creates a random triangle square matrix.
--- As with 'randomDiagonal' the density refers to the density of the triangle.
+-- | Creates a random triangular square matrix.
+-- As with 'randomDiagonal' the density refers to the density of the triangular.
 -- That is the number of entries in the matrix will be @'floor' (density * size * (size + 1) / 2)@.
 
 randomTriangle :: (RandomGen g, Random a) =>
 		 g        -- ^ random generator
   -> Rows     -- ^ number of rows (and columns)
-  -> Density  -- ^ percentage (between 0 and 1) of filled positions in the lower triangle
+  -> Density  -- ^ percentage (between 0 and 1) of filled positions in the lower triangular
   -> (a, a)   -- ^ lower\/upper bounds
   -> Mat a
 randomTriangle gen size = randomMatrixWith gen size size f (resizeWith chopTriangle) where
@@ -282,19 +282,19 @@ randomTriangle gen size = randomMatrixWith gen size size f (resizeWith chopTrian
 randomTriangle' :: Random a =>
 		 RandomGenerator   -- ^ random generator
   -> Rows              -- ^ number of rows (and columns)
-  -> Density           -- ^ percentage (between 0 and 1) of filled positions in the lower triangle
+  -> Density           -- ^ percentage (between 0 and 1) of filled positions in the lower triangular
   -> (a, a)            -- ^ lower\/upper bounds
   -> Mat a
 randomTriangle' = withStdGen randomTriangle
 
--- | Creates a random strict triangle matrix (no entries at the diagonal). The
---   density refers to the density of the strict triangle, that is the number of
+-- | Creates a random strict triangular matrix (no entries at the diagonal). The
+--   density refers to the density of the strict triangular, that is the number of
 --   entries is @floor (density * size * (size - 1) / 2)@.
 
 randomStrictTriangle :: (RandomGen g, Random a) =>
 	   g        -- ^ random generator
 	-> Rows     -- ^ number of rows (and columns)
-	-> Density  -- ^ percentage (between 0 and 1) of filled positions in the strict lower triangle
+	-> Density  -- ^ percentage (between 0 and 1) of filled positions in the strict lower triangular
 	-> (a, a)   -- ^ lower\/upper bounds
 	-> Mat a
 randomStrictTriangle gen size = randomMatrixWith gen size size f (resizeWith chopStrictTriangle)
@@ -305,7 +305,7 @@ randomStrictTriangle' :: Random a =>
 		 RandomGenerator   -- ^ random generator
 	-> Rows              -- ^ number of rows (and columns)
 	-> Density           -- ^ percentage (between 0 and 1) of filled positions 
-	                     --   in the strict lower triangle
+	                     --   in the strict lower triangular
 	-> (a, a)            -- ^ lower\/upper bounds
 	-> Mat a
 randomStrictTriangle' = withStdGen randomStrictTriangle
