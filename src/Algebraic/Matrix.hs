@@ -122,6 +122,8 @@ import Auxiliary.SetOps             ( Intersectable, intersectionWith, intersect
                                       leftmostUnion, allUnion, (\\/), (/\\), (//\) )
 import Auxiliary.SetOpsInstances    ()
 
+import Prelude hiding               ( (*>) )
+
 -- | Matrix data type.
 -- Both @o@ and @i@ are type constructors and serve as mnemonics for the __o__uter, respectively
 -- __i__nner association list types.
