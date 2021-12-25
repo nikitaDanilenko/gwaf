@@ -896,17 +896,6 @@ instance MonoidM [a] where
   one      = []
   mproduct = concat
 
--- | In base-4.7.0.1 these two instances are not present automatically.
-
-instance Functor First where
-
-  fmap f = First . fmap f . getFirst
-
-instance Applicative First where
-
-  pure                = First . pure
-  First f <*> First x = First (f <*> x)
-
 -- | 'First' is an 'Applicative' instance and thus the implementation is the same as for 'ZipList'.
 
 instance MonoidM m => MonoidM (First m) where
@@ -1086,6 +1075,3 @@ instance KleeneAlgebraC Bool
 instance (Ord t, MonoidA t) => KleeneAlgebraC (Tropical t)
 instance KleeneAlgebraC (Regular r)
 instance (KleeneAlgebraC k, KleeneAlgebraC k') => KleeneAlgebraC (k, k')
-
-instance Arbitrary a => Arbitrary (First a) where
-  arbitrary = fmap First arbitrary
