@@ -39,6 +39,8 @@ import Auxiliary.General    ( Key )
 import Auxiliary.Mapping    ( Mapping, MappingV )
 import Auxiliary.SetOps     ( UnionableHom, Unionable )
 
+import Prelude hiding       ( (*>) )
+
 -- | This function contains the main strategy of the computation,
 -- which is taking the step iterator and folding it over the row indices of the matrix.
 -- However, both the step iterator and the row indices are supplied as parameters.
