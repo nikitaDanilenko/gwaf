@@ -21,7 +21,6 @@ import Test.QuickCheck           ( Arbitrary, property )
 import Auxiliary.AList           ( AList )
 import Auxiliary.General         ( Key )
 import Auxiliary.KeyedClasses    ( clookup )
-import Auxiliary.IntMapArbitrary ()
 import Auxiliary.Mapping         ( Mapping, fromRow, toRow, keys, values, size,
                                    MappingV, isEmpty, empty, insert, insertWith,
                                    singleton, fromRow, delete )
