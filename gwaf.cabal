@@ -79,4 +79,5 @@ Test-Suite allTests
                       , array >=0.4
                       , hspec
                       , QuickCheck
+                      , random
   
