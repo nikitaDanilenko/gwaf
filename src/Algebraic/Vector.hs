@@ -60,6 +60,8 @@ import Auxiliary.KeyedClasses       ( Lookup, maybeAt, KeyMaybeFunctor, ffilter 
 import Auxiliary.Mapping            ( Mapping, singleton, MappingV, empty, keys, values )
 import Auxiliary.SetOps             ( UnionableHom, unionWith )
 
+import Prelude hiding               ( (*>) )
+
 -- | A safe version of a lookup operation, because non-existent values
 --   are mapped to the 'zero' of the underlying monoid.
 
