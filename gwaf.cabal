@@ -57,9 +57,9 @@ library
   
   -- LANGUAGE extensions used by modules in this package.
   other-extensions:    MultiParamTypeClasses 
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base >=4.8,
                        QuickCheck >=2.9 && <3,
-                       containers >=0.5 && <0.6,
+                       containers >=0.5,
                        array >=0.4,
                        hspec,
                        transformers >= 0.2,
